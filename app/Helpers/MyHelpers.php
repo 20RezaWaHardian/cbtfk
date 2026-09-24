@@ -24,7 +24,7 @@ class MyHelpers
 
     public static function nama_gelarById($id_pegawai)
     {
-        $pegawai = DB::table('sistembl_siakad-uin .dosen')->where('id_dosen', $id_pegawai)->first();
+        $pegawai = DB::table('sistembl_siakad-uin.dosen')->where('id_dosen', $id_pegawai)->first();
 
         if ($pegawai && isset($pegawai->nama)) {
             $koma = '';
@@ -129,7 +129,7 @@ class MyHelpers
             ->leftJoin('siakad.matakuliah as b', 'a.id_matakuliah', '=', 'b.id_matakuliah')
             ->leftJoin('siakad.kurikulum as c', 'a.id_kurikulum', '=', 'c.id_kurikulum')
             ->leftJoin('siakad_blok.blok as d', 'b.id_blok', '=', 'd.id_blok')
-            ->where('b.sistembl_siakad-uin ', '1')
+            ->where('b.sistembl_siakad-uin', '1')
             ->where('a.id_kelas', $kelas)
             ->whereNull('a.id_kelas_parent')
             ->orderBy('b.nama_blok')

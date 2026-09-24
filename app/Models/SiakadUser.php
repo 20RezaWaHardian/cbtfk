@@ -9,7 +9,7 @@ class SiakadUser extends Model
 {
     use HasFactory;
 
-    protected $table = 'sistembl_siakad-uin .users';
+    protected $table = 'sistembl_siakad-uin.users';
     protected $primaryKey = 'id';
 
     public $guarded = [];

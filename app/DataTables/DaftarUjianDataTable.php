@@ -109,8 +109,8 @@ class DaftarUjianDataTable extends DataTable
             $idPegawaiLogin = auth()->user()->pegawai->pegawai_siakad_id;
             $semester = DB::table('siakad.semester')->where('periode_aktif', 1)->first();
 
-            $co_blok = DB::table('sistembl_siakad-uin .pengelola_blok as a')
-                    ->join('sistembl_siakad-uin .dosen as b','a.dosen_id','b.id_dosen')
+            $co_blok = DB::table('sistembl_siakad-uin.pengelola_blok as a')
+                    ->join('sistembl_siakad-uin.dosen as b','a.dosen_id','b.id_dosen')
                     ->where('a.id_dosen', auth()->user()->dosen->id_dosen)
                     ->pluck('a.id_kelas')->toArray();
 

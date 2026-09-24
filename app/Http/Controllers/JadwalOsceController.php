@@ -41,10 +41,10 @@ class JadwalOsceController extends Controller
         //     }])->get();
 
         $semester = SiakadSemester::semesterAktif()->first();
-        $blok = DB::table('sistembl_siakad-uin .blok as a')
+        $blok = DB::table('sistembl_siakad-uin.blok as a')
             ->where('a.semester_id', $semester->id_semester)
-            ->join('sistembl_siakad-uin .kelompok_blok as b','a.id','b.blok_id')
-            ->join('sistembl_siakad-uin .aturan_kegiatan_blok as c','c.id','b.aturan_kegiatan_blok_id')
+            ->join('sistembl_siakad-uin.kelompok_blok as b','a.id','b.blok_id')
+            ->join('sistembl_siakad-uin.aturan_kegiatan_blok as c','c.id','b.aturan_kegiatan_blok_id')
             ->where('c.jenis_kegiatan_id',15)
             ->select('a.id', 'a.nama', 'a.kode')
             ->get();
@@ -225,17 +225,17 @@ class JadwalOsceController extends Controller
         //     ->select('a.id_jadwal_has_mhs','a.id_jadwal_osce', 'b.no_mhs', 'c.nama_mahasiswa', 'a.nilai_akhir')
         //     ->get();
         $jadwal_osce = JadwalOsce::where('isDeleted', false)->findOrFail(decrypt($id_jadwal_osce));
-        $calon = DB::table('sistembl_siakad-uin .peserta_blok as a')
+        $calon = DB::table('sistembl_siakad-uin.peserta_blok as a')
                         // ->leftjoin('siakad_blok.kelompok_belajar as b', 'a.id_kelompok_belajar','b.id_kelompok_belajar')
                         // ->leftjoin('siakad.mhs_pt as c','c.id_mhs_pt','a.id_mhs_pt')
-                        ->join('sistembl_siakad-uin .mahasiswa as d','d.id_mahasiswa','a.mahasiswa_id')
+                        ->join('sistembl_siakad-uin.mahasiswa as d','d.id_mahasiswa','a.mahasiswa_id')
                         ->where('a.blok_id',$jadwal_osce->blok_id)
                         ->distinct()
                         ->select('d.id_mahasiswa as id_mhs_pt','d.nim as no_mhs','d.nama as nama_mahasiswa')
                         ->get();
         // dd($peserta);
         $peserta = DB::table('jadwal_has_mhs as a')
-            ->join('sistembl_siakad-uin .mahasiswa as b', 'b.id_mahasiswa', '=', 'a.id_mhs_pt')
+            ->join('sistembl_siakad-uin.mahasiswa as b', 'b.id_mahasiswa', '=', 'a.id_mhs_pt')
             // ->join('siakad.mahasiswa as c', 'c.id_mahasiswa', '=', 'b.id_mahasiswa')
             ->where('a.id_jadwal_osce', $jadwal_osce->id_jadwal_osce)
             ->select('a.*', 'b.nim as no_mhs', 'b.nama as nama_mahasiswa')->orderBy('b.nim')->get();

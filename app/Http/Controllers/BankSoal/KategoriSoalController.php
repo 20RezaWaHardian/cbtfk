@@ -42,7 +42,7 @@ class KategoriSoalController extends Controller
     public function getBlok(Request $request)
     {
     
-        $kelas = DB::table('sistembl_siakad-uin .blok as a')
+        $kelas = DB::table('sistembl_siakad-uin.blok as a')
                     ->select(
                         'a.id',
                         'a.kode',
@@ -134,7 +134,7 @@ class KategoriSoalController extends Controller
         //             'aktif' => (bool) $semester->periode_aktif,
         //         ];
         //     });
-        return DB::table('sistembl_siakad-uin .semester')
+        return DB::table('sistembl_siakad-uin.semester')
                     ->where('is_aktif',1)
                     ->get()
                     ->map(function ($semester) {

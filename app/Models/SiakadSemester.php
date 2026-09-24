@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class SiakadSemester extends Model
 {
     use HasFactory;
-    protected $table = 'sistembl_siakad-uin .semester';
+    protected $table = 'sistembl_siakad-uin.semester';
     public $primaryKey = 'id_semester';
     protected $guarded = [];
 

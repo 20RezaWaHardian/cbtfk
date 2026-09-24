@@ -52,7 +52,7 @@ class LoadDataController extends Controller
         //     ->leftjoin("siakad_blok.blok as d", 'b.id_blok', '=', 'd.id_blok')
         //     ->leftjoin('siakad_blok.mapping_blok_jenisblok as e', 'e.id_blok', 'd.id_blok')
         //     ->whereIn('e.id_jenis_blok',[22,25])
-        //     ->where("sistembl_siakad-uin ", '1')
+        //     ->where("sistembl_siakad-uin", '1')
         //     ->where("a.id_prodi", $prodiId)
         //     ->where("a.id_semester", $semesterId)
         //     ->wherenull("a.id_kelas_parent")
@@ -68,7 +68,7 @@ class LoadDataController extends Controller
             ->leftJoin("siakad_blok.blok as d", 'b.id_blok', '=', 'd.id_blok')
             ->leftJoin('siakad_blok.mapping_blok_jenisblok as e', 'e.id_blok', '=', 'd.id_blok')
             // ->whereIn('e.id_jenis_blok',[22,25])
-            ->where("sistembl_siakad-uin ", '1')
+            ->where("sistembl_siakad-uin", '1')
             ->where("a.id_prodi", $prodiId)
             ->where("a.id_semester", $semesterId)
             ->whereNull("a.id_kelas_parent")
@@ -107,7 +107,7 @@ class LoadDataController extends Controller
 
     public function getPegawai(Request $request)
     {
-        $datas = DB::table('sistembl_siakad-uin .dosen as a')
+        $datas = DB::table('sistembl_siakad-uin.dosen as a')
             ->where(function ($q) use ($request) {
                 $q->orWhere('a.nip', 'like', '%' . $request->search . '%')
                     ->where('a.nidn', 'like', '%' . $request->search . '%')

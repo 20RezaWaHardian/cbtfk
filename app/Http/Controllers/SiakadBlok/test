@@ -29,12 +29,12 @@ class KelassistemblokController extends Controller
     public function index(Request $request)
     {
         $prodi = DB::table('prodi as a')
-            ->select("a.id_prodi", 'a.nama_prodi', 'b.nama_fakultas', 'a.sistembl_siakad-uin ')
+            ->select("a.id_prodi", 'a.nama_prodi', 'b.nama_fakultas', 'a.sistembl_siakad-uin')
             ->leftjoin('fakultas as b', 'a.id_fakultas', '=', 'b.id_fakultas')
             ->leftjoin("siakad_blok.userinstansi as c", 'a.id_prodi', '=', 'c.id_prodi')
             ->where("c.id_users", Auth::user()->id)
             ->where('a.status', '1')
-            ->where('a.sistembl_siakad-uin ', '>', 0)
+            ->where('a.sistembl_siakad-uin', '>', 0)
             ->orderby('b.nama_fakultas')
             ->orderby('a.nama_prodi')
             ->get();
@@ -64,7 +64,7 @@ class KelassistemblokController extends Controller
             ->leftjoin("matakuliah as b", 'a.id_matakuliah', '=', 'b.id_matakuliah')
             ->leftjoin("kurikulum as c", 'a.id_kurikulum', '=', 'c.id_kurikulum')
             ->leftjoin("siakad_blok.blok as d", 'b.id_blok', '=', 'd.id_blok')
-            ->where("sistembl_siakad-uin ", '1')
+            ->where("sistembl_siakad-uin", '1')
             ->where("a.id_prodi", $id)
             ->where("a.id_semester", $sem)
             ->wherenull("a.id_kelas_parent")
@@ -97,11 +97,11 @@ class KelassistemblokController extends Controller
     function update(Request $req)
     {
         $data = array();
-        if ($req->sistembl_siakad-uin  == '') {
-            $data['sistembl_siakad-uin '] = null;
+        if ($req->sistembl_siakad-uin == '') {
+            $data['sistembl_siakad-uin'] = null;
             $data['nama_blok'] = null;
         } else {
-            $data['sistembl_siakad-uin '] = 1;
+            $data['sistembl_siakad-uin'] = 1;
             $data['nama_blok'] = $req->nama_blok;
         }
 

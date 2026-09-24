@@ -19,9 +19,9 @@ class OsceParticipantFlowTest extends TestCase
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
         DB::purge('sqlite');
         DB::statement("ATTACH DATABASE ':memory:' AS siakad");
-        DB::statement("ATTACH DATABASE ':memory:' AS sistem_blok");
-        DB::statement('CREATE TABLE sistem_blok.mahasiswa (id_mahasiswa INTEGER PRIMARY KEY, nim TEXT, nama TEXT)');
-        DB::statement('CREATE TABLE sistem_blok.peserta_blok (mahasiswa_id INTEGER, blok_id INTEGER)');
+        DB::statement("ATTACH DATABASE ':memory:' AS sistembl_siakad-uin ");
+        DB::statement('CREATE TABLE sistembl_siakad-uin .mahasiswa (id_mahasiswa INTEGER PRIMARY KEY, nim TEXT, nama TEXT)');
+        DB::statement('CREATE TABLE sistembl_siakad-uin .peserta_blok (mahasiswa_id INTEGER, blok_id INTEGER)');
         DB::statement('CREATE TABLE siakad.mhs_pt (id_mhs_pt INTEGER PRIMARY KEY, no_mhs TEXT, id_mahasiswa INTEGER)');
         DB::statement('CREATE TABLE siakad.mahasiswa (id_mahasiswa INTEGER PRIMARY KEY, nama_mahasiswa TEXT)');
         Schema::create('jadwal_osce', function ($t) {
@@ -72,8 +72,8 @@ class OsceParticipantFlowTest extends TestCase
             ['id_jadwal_osce' => 2, 'id_jenis_osce' => 3, 'id_pegawai' => 20],
         ]);
         foreach ([1, 2, 3] as $id) {
-            DB::table('sistem_blok.mahasiswa')->insert(['id_mahasiswa' => $id, 'nim' => 'NIM'.$id, 'nama' => 'Peserta '.$id]);
-            DB::table('sistem_blok.peserta_blok')->insert(['mahasiswa_id' => $id, 'blok_id' => 1]);
+            DB::table('sistembl_siakad-uin .mahasiswa')->insert(['id_mahasiswa' => $id, 'nim' => 'NIM'.$id, 'nama' => 'Peserta '.$id]);
+            DB::table('sistembl_siakad-uin .peserta_blok')->insert(['mahasiswa_id' => $id, 'blok_id' => 1]);
             DB::table('jenis_osce')->insert(['id_jenis_osce' => $id, 'nama_jenis_osce' => 'Stase '.$id]);
             DB::table('komponen_nilai_osce')->insert(['id_komponen_nilai_osce' => $id, 'id_jenis_osce' => $id]);
             DB::table('instrumen_nilai_osce')->insert(['id_komponen_nilai_osce' => $id, 'nilai' => 3]);
@@ -253,7 +253,7 @@ class OsceParticipantFlowTest extends TestCase
 
     public function test_foreign_block_rolls_back_entire_selection(): void
     {
-        DB::table('sistem_blok.peserta_blok')->where('mahasiswa_id', 2)->update(['blok_id' => 2]);
+        DB::table('sistembl_siakad-uin .peserta_blok')->where('mahasiswa_id', 2)->update(['blok_id' => 2]);
         try {
             app(OsceParticipantService::class)->setParticipants(1, [1, 2], 1);
             $this->fail('Foreign block accepted');
@@ -273,7 +273,7 @@ class OsceParticipantFlowTest extends TestCase
     public function test_existing_participant_survives_contract_change(): void
     {
         $this->place();
-        DB::table('sistem_blok.peserta_blok')->where('mahasiswa_id', 1)->delete();
+        DB::table('sistembl_siakad-uin .peserta_blok')->where('mahasiswa_id', 1)->delete();
         app(OsceParticipantService::class)->setParticipants(1, [1], 2);
         $this->assertDatabaseHas('peserta_station_osce', ['id_mhs_pt' => 1, 'id_jenis_osce' => 2]);
     }

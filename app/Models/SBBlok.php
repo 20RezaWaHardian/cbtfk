@@ -9,7 +9,7 @@ class SBBlok extends Model
 {
     use HasFactory;
 
-    protected $table = 'sistem_blok.blok';
+    protected $table = 'sistembl_siakad-uin .blok';
     protected $primaryKey = 'id';
     protected $guarded = [];
 }

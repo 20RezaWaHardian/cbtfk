@@ -32,8 +32,8 @@ class PesertaUjianController extends Controller
 
             if($ujian->id_jenis_ujian == 1)
             {
-                $daftar_mahasiswa = DB::table("sistem_blok.peserta_blok as a")
-                                ->leftJoin("sistem_blok.mahasiswa as b", 'a.mahasiswa_id', '=', 'b.id_mahasiswa')
+                $daftar_mahasiswa = DB::table("sistembl_siakad-uin .peserta_blok as a")
+                                ->leftJoin("sistembl_siakad-uin .mahasiswa as b", 'a.mahasiswa_id', '=', 'b.id_mahasiswa')
                                 ->leftJoin('peserta_ujian as f', function ($q) use ($ujian) {
                                     $q->on('f.id_mhs_pt', '=', 'b.id_mahasiswa')
                                         ->where('f.ujian_id', '=', $ujian->id_ujian);

@@ -85,8 +85,8 @@ class DaftarSoalButuhValidasiDataTable extends DataTable
     public function query(Soal $model): QueryBuilder
     {
         if (auth()->user()->hasAnyRole(['koordinator-blok'])) {
-            $co_blok = DB::table('sistem_blok.pengelola_blok as a')
-                    ->join('sistem_blok.dosen as b','a.dosen_id','b.id_dosen')
+            $co_blok = DB::table('sistembl_siakad-uin .pengelola_blok as a')
+                    ->join('sistembl_siakad-uin .dosen as b','a.dosen_id','b.id_dosen')
                     ->where('a.id_dosen', auth()->user()->dosen->id_dosen)
                     ->pluck('a.id_kelas')->toArray();
             return $model->newQuery()

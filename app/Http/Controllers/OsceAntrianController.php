@@ -76,7 +76,7 @@ class OsceAntrianController extends Controller
         $pesertaStation = DB::table('peserta_station_osce as ps')
             ->join('jadwal_osce as j', 'j.id_jadwal_osce', '=', 'ps.id_jadwal_osce')
             ->join('jenis_osce as s', 's.id_jenis_osce', '=', 'ps.id_jenis_osce')
-            ->join('sistem_blok.mahasiswa as m', 'm.id_mahasiswa', '=', 'ps.id_mhs_pt')
+            ->join('sistembl_siakad-uin .mahasiswa as m', 'm.id_mahasiswa', '=', 'ps.id_mhs_pt')
             ->where('ps.id_peserta_station_osce', $idPesertaStation)
             ->select('ps.*', 'j.keterangan', 's.nama_jenis_osce', 'm.nim as no_mhs', 'm.nama as nama_mahasiswa')
             ->first();
@@ -346,7 +346,7 @@ class OsceAntrianController extends Controller
     {
         return DB::table('peserta_station_osce as ps')
             // ->join('siakad.mhs_pt as mp', 'mp.id_mhs_pt', '=', 'ps.id_mhs_pt')
-            ->join('sistem_blok.mahasiswa as m', 'm.id_mahasiswa', '=', 'ps.id_mhs_pt')
+            ->join('sistembl_siakad-uin .mahasiswa as m', 'm.id_mahasiswa', '=', 'ps.id_mhs_pt')
             ->whereExists(function ($q) {
                 $q->selectRaw('1')->from('jadwal_has_mhs as jm')->whereColumn('jm.id_jadwal_osce', 'ps.id_jadwal_osce')->whereColumn('jm.id_mhs_pt', 'ps.id_mhs_pt');
             })

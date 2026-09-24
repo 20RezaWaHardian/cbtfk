@@ -18,8 +18,8 @@ class OsceParticipantService
 
             foreach (array_values(array_unique($ids)) as $offset => $idMhs) {
                 $terdaftar = DB::table('jadwal_has_mhs')->where('id_jadwal_osce', $idJadwal)->where('id_mhs_pt', $idMhs)->exists();
-                if (!$terdaftar && !DB::table('sistem_blok.peserta_blok as pb')
-                    ->join('sistem_blok.mahasiswa as m', 'm.id_mahasiswa', '=', 'pb.mahasiswa_id')
+                if (!$terdaftar && !DB::table('sistembl_siakad-uin .peserta_blok as pb')
+                    ->join('sistembl_siakad-uin .mahasiswa as m', 'm.id_mahasiswa', '=', 'pb.mahasiswa_id')
                     ->where('pb.blok_id', $jadwal->blok_id)->where('pb.mahasiswa_id', $idMhs)->exists()) {
                     throw ValidationException::withMessages(['id_mhs_pt' => 'Mahasiswa bukan peserta kontrak blok jadwal ini.']);
                 }

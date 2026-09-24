@@ -74,7 +74,7 @@ class KelasController extends Controller
             ->leftjoin("siakad.matakuliah as b", 'a.id_matakuliah', '=', 'b.id_matakuliah')
             ->leftjoin("siakad.kurikulum as c", 'a.id_kurikulum', '=', 'c.id_kurikulum')
             ->leftjoin("siakad_blok.blok as d", 'b.id_blok', '=', 'd.id_blok')
-            ->where("sistem_blok", '1')
+            ->where("sistembl_siakad-uin ", '1')
             ->where("a.id_prodi", $id_kelas)
             ->where("a.id_semester", $id_semester)
             ->wherenull("a.id_kelas_parent")

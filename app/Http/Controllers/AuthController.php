@@ -31,9 +31,9 @@ class AuthController extends Controller
         $valid = $user && $user->password && Hash::check($password, $user->password);
 
         if (!$valid) {
-            $source = DB::table('sistem_blok.users as a')
-                ->leftJoin('sistem_blok.mahasiswa as b', 'a.id', '=', 'b.user_id')
-                ->leftJoin('sistem_blok.dosen as c', 'a.id', '=', 'c.user_id')
+            $source = DB::table('sistembl_siakad-uin .users as a')
+                ->leftJoin('sistembl_siakad-uin .mahasiswa as b', 'a.id', '=', 'b.user_id')
+                ->leftJoin('sistembl_siakad-uin .dosen as c', 'a.id', '=', 'c.user_id')
                 ->where('a.username', $user ? $user->username : $username)
                 ->select('a.*', 'b.id_mahasiswa', 'c.id_dosen')
                 ->first();

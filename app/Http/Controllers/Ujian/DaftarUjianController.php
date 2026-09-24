@@ -59,7 +59,7 @@ class DaftarUjianController extends Controller
         $kategori_ujian = DB::table('kategori_ujian')
                             ->get();
         
-        $blok = DB::table('sistem_blok.blok')
+        $blok = DB::table('sistembl_siakad-uin .blok')
             ->where('semester_id', $semester->id_semester)
             ->select('id', 'nama', 'kode')
             ->get();
@@ -139,7 +139,7 @@ class DaftarUjianController extends Controller
                             ->get();
         $kategori_ujian = DB::table('kategori_ujian')
                             ->get();
-        $blok = DB::table('sistem_blok.blok')
+        $blok = DB::table('sistembl_siakad-uin .blok')
             ->where('semester_id', $semester->id_semester)
             ->select('id', 'nama', 'kode')
             ->get();

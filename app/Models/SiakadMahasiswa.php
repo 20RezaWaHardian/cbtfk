@@ -9,7 +9,7 @@ class SiakadMahasiswa extends Model
 {
     use HasFactory;
 
-    protected $table = 'sistem_blok.mahasiswa';
+    protected $table = 'sistembl_siakad-uin .mahasiswa';
     protected $primaryKey = 'id_mahasiswa';
     protected $guarded = [];
 }

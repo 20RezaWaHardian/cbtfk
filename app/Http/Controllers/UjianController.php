@@ -36,7 +36,7 @@ class UjianController extends Controller
             $ujian = Ujian::findorfail($ujianId);
             if($ujian->id_jenis_ujian == 1)
             {
-                $peserta = PesertaUjian::join('sistem_blok.mahasiswa as b','b.id_mahasiswa','peserta_ujian.id_mhs_pt')
+                $peserta = PesertaUjian::join('sistembl_siakad-uin .mahasiswa as b','b.id_mahasiswa','peserta_ujian.id_mhs_pt')
                                         ->findorfail($pesertaId);
             }else{
                 $peserta = PesertaUjian::join('peserta_eksternal as b','b.id_peserta_eksternal','peserta_ujian.id_peserta_eksternal')

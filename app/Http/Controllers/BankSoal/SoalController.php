@@ -102,8 +102,8 @@ class SoalController extends Controller
             abort_unless($rows->count() === count($data['id']), 409, 'Daftar soal berubah. Muat ulang halaman.');
             foreach ($rows as $soal) {
                 if (auth()->user()->hasAnyRole(['koordinator-blok'])) {
-                    $kelas = DB::table('sistem_blok.pengelola_blok as a')
-                        ->join('sistem_blok.dosen as b', 'a.dosen_id', 'b.id_dosen')
+                    $kelas = DB::table('sistembl_siakad-uin .pengelola_blok as a')
+                        ->join('sistembl_siakad-uin .dosen as b', 'a.dosen_id', 'b.id_dosen')
                         ->where('a.id_dosen', auth()->user()->dosen?->id_dosen)
                         ->pluck('a.id_kelas');
                     abort_unless($soal->kategori_soal && $kelas->contains($soal->kategori_soal->id_kelas), 403);
@@ -460,8 +460,8 @@ class SoalController extends Controller
         if (Gate::allows('read bank-soal/soal/daftar-soal')) {
 
             if (auth()->user()->hasAnyRole(['koordinator-blok'])) {
-                $co_blok = DB::table('sistem_blok.pengelola_blok as a')
-                    ->join('sistem_blok.dosen as b','a.dosen_id','b.id_dosen')
+                $co_blok = DB::table('sistembl_siakad-uin .pengelola_blok as a')
+                    ->join('sistembl_siakad-uin .dosen as b','a.dosen_id','b.id_dosen')
                     ->where('a.id_dosen', auth()->user()->dosen->id_dosen)
                     ->pluck('a.id_kelas')->toArray();
                 $blm_validasi = Soal::with('kategori_soal')

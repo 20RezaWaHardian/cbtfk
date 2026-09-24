@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class UserSiakad extends Model
 {
     use HasFactory;
-    protected $table = 'sistem_blok.users';
+    protected $table = 'sistembl_siakad-uin .users';
     protected $guarded = [];
     public $primaryKey = 'id';
 

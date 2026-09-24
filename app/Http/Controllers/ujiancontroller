@@ -1,0 +1,357 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Carbon\Carbon;
+use App\SoalSatuan;
+use App\Models\Soal;
+use App\Models\Ujian;
+use App\Models\PaketSoal;
+use App\Models\EssayJawab;
+use App\Models\JawabanMhs;
+use App\Models\PilganJawab;
+use App\Models\PaketHasSoal;
+use App\Models\PesertaUjian;
+use Illuminate\Http\Request;
+use App\Helpers\LogAktifitas;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use App\Http\Requests\EssayJawabRequest;
+use App\Http\Requests\PilganJawabRequest;
+
+
+class UjianController extends Controller
+{
+
+
+    public function index($ujianId, $pesertaUjianId)
+    {
+        date_default_timezone_set("Asia/Jakarta"); // mengatur time zone untuk WIB.
+        try {
+            $ujianId = decrypt($ujianId);
+            $pesertaId = decrypt($pesertaUjianId);
+
+            $ujian = Ujian::findorfail($ujianId);
+
+            $peserta = PesertaUjian::with('mahasiswa_rombel')->findorfail($pesertaId);
+
+            if ($peserta->status_pengerjaan == 0) {
+                $peserta->update([
+                    'mulai_ujian' => Carbon::now(),
+                    'status_pengerjaan' => 1,
+                    'ip_address' => request()->ip(),
+                ]);
+            }
+
+            $peserta = PesertaUjian::findorfail($pesertaId);
+            $ujian = Ujian::findorfail($ujianId);
+            $paket_soal = PaketSoal::where('id_paket_soal',$ujian->paket_soal_id)->first();
+
+            $paket_soal_id = $ujian->paket_soal_id;
+
+            // Ambil nama room yang sudah dibuat oleh admin
+            $roomName = $ujian->room_name;
+
+            // Buat URL join khusus peserta ini
+            // $idPesertaUjian = $peserta->id_peserta_ujian;
+            $participantName = $peserta->mahasiswa_rombel->nama_mahasiswa;
+            // $participantUrl = "https://".env('METERED_DOMAIN')."/{$roomName}?name={$participantName}&role=participant&autoJoin=true&id={$peserta->id_peserta_ujian}";
+            $participantUrl = env('METERED_DOMAIN')."/{$roomName}";
+
+            $paket_has_soal = PaketHasSoal::where('paket_soal_id', $paket_soal_id)->with('soal')->get();
+
+            $totalSoal = count($paket_has_soal);
+
+            // Jika ada soal yang ditemukan
+            if ($paket_has_soal->isNotEmpty()) {
+                $soal_ids = $paket_has_soal->pluck('soal_id');
+                $soal_satuan = Soal::whereIn('id_soal', $soal_ids)->with(['soal_pilgan','soal_essay','paket_soal'])->orderBy('id_soal', 'asc')->paginate(1);
+
+                $jawaban_pilgan = PilganJawab::where('peserta_ujian_id', $peserta->id_peserta_ujian)
+                ->whereIn('soal_id', $soal_ids)
+                ->get();
+
+                $jawaban_essay = EssayJawab::where('peserta_ujian_id', $peserta->id_peserta_ujian)
+                ->whereIn('soal_id', $soal_ids)
+                ->get();
+
+                $totalJawaban = count($jawaban_pilgan) + count($jawaban_essay);
+
+            } else {
+
+                $soal_satuan = collect();
+                $jawaban_pilgan = collect();
+                $jawaban_essay = collect();
+
+                $totalJawaban = count($jawaban_pilgan) + count($jawaban_essay);
+
+
+            }
+
+            $jumlahSoal = $soal_satuan->lastPage();
+
+
+
+            $waktu_mulai = date('F d, Y H:i:s', strtotime($peserta->mulai_ujian)); // mengubah bentuk string waktu mulai untuk digunakan pada date di js
+
+            $durasi_jam   =  date('H', strtotime($paket_soal->durasi));
+            $durasi_menit =  date('i', strtotime($paket_soal->durasi));
+            $durasi_detik =  date('s', strtotime($paket_soal->durasi));
+
+            $total_duration_in_seconds = ($durasi_jam * 3600) + ($durasi_menit * 60) + $durasi_detik;
+
+            // waktu selesai = waktu mulai + durasi
+            $selesai = date_create($peserta->mulai_ujian);
+            date_add($selesai, date_interval_create_from_date_string("$durasi_jam hours, $durasi_menit minutes, $durasi_detik seconds"));
+            $waktu_selesai = date_format($selesai, 'Y-m-d H:i:s');
+
+            LogAktifitas::catat("Berhasil Memulai Ujian");
+            return view('exam.room.halaman-ujian',
+            compact('soal_satuan','ujian',
+                    'peserta','paket_soal_id',
+                    'waktu_mulai','waktu_selesai',
+                    'durasi_jam','durasi_menit',
+                    'totalSoal','totalJawaban',
+                    'durasi_detik','jawaban_pilgan',
+                    'jawaban_essay','jumlahSoal',
+                    'total_duration_in_seconds','participantUrl', 'participantName'));
+
+        } catch (\Exception $e) {
+            LogAktifitas::catat("Gagal Memulai Ujian");
+            return redirect()->back()->with('error','Ops, Ada Kesalahan ... Silahkan Coba Lagi!');
+        }
+    }
+
+
+     public function fetch_data(Request $request){
+
+        $peserta = PesertaUjian::find($request->peserta_ujian_id);
+
+        $ujian = Ujian::where('id_ujian',$peserta->ujian_id)->first();
+        $paket_soal_id = $ujian->paket_soal_id;
+        $paket_has_soal = PaketHasSoal::where('paket_soal_id', $paket_soal_id)->get();
+
+        $totalSoal = count($paket_has_soal);
+        // Jika ada soal yang ditemukan
+        if ($paket_has_soal->isNotEmpty()) {
+            $soal_ids = $paket_has_soal->pluck('soal_id');
+            $soal_satuan = Soal::whereIn('id_soal', $soal_ids)->with(['soal_pilgan','soal_essay','soal_pilgan.pilgan_jawab', 'soal_essay.essay_jawab'])->orderBy('id_soal', 'asc')->paginate(1);
+
+            $jawaban_pilgan = PilganJawab::where('peserta_ujian_id', $peserta->id_peserta_ujian)
+            ->whereIn('soal_id', $soal_ids)
+            ->get();
+
+
+            $jawaban_essay = EssayJawab::where('peserta_ujian_id', $peserta->id_peserta_ujian)
+            ->whereIn('soal_id', $soal_ids)
+            ->get();
+
+            $totalJawaban = count($jawaban_pilgan) + count($jawaban_essay);
+        } else {
+
+            $soal_satuan = collect();
+            $jawaban_pilgan = collect();
+            $jawaban_essay = collect();
+
+            $totalJawaban = count($jawaban_pilgan) + count($jawaban_essay);
+        }
+        $jumlahSoal = $soal_satuan->lastPage();
+        // dd($soal_satuan);
+        if($request->ajax())
+        {
+            return view('exam.room.pagination_data',compact('soal_satuan','totalSoal','totalJawaban', 'ujian', 'peserta','paket_soal_id','jawaban_pilgan','jawaban_essay','jumlahSoal'))->render();
+        }
+    }
+    // public function fetch_data(Request $request){
+    //     $peserta = PesertaUjian::find($request->peserta_ujian_id);
+    //     $ujian = Ujian::where('id_ujian', $peserta->ujian_id)->first();
+    //     $paket_soal_id = $ujian->paket_soal_id;
+
+    //     // Ambil soal_id yang terkait dengan peserta ujian
+    //     $paket_has_soal = PaketHasSoal::where('paket_soal_id', $paket_soal_id)->get();
+    //     $soal_ids = $paket_has_soal->pluck('soal_id');
+
+    //     $totalSoal = count($paket_has_soal);
+
+    //     // Eager loading soal dan jawaban sekaligus
+    //     $soal_satuan = Soal::whereIn('id_soal', $soal_ids)
+    //         ->with([
+    //             'soal_pilgan.pilgan_jawab' => function ($query) use ($request) {
+    //                 $query->where('peserta_ujian_id', $request->peserta_ujian_id);
+    //             },
+    //             'soal_essay.essay_jawab' => function ($query) use ($request) {
+    //                 $query->where('peserta_ujian_id', $request->peserta_ujian_id);
+    //             }
+    //         ])
+    //         ->orderBy('id_soal', 'asc')
+    //         ->paginate(1); // Paginasi 1 soal per halaman
+
+    //     // Ambil semua jawaban pilgan dan essay untuk peserta ujian sekaligus
+    //     $jawaban_pilgan = PilganJawab::where('peserta_ujian_id', $request->peserta_ujian_id)
+    //         ->whereIn('soal_id', $soal_ids)
+    //         ->get(); // Ambil jawaban pilgan sekaligus
+
+    //     $jawaban_essay = EssayJawab::where('peserta_ujian_id', $request->peserta_ujian_id)
+    //         ->whereIn('soal_id', $soal_ids)
+    //         ->get(); // Ambil jawaban essay sekaligus
+
+    //     // Hitung total jawaban
+    //     $totalJawaban = $jawaban_pilgan->count() + $jawaban_essay->count();
+
+    //     // Hitung jumlah halaman soal
+    //     $jumlahSoal = $soal_satuan->lastPage();
+
+    //     // Mengembalikan data ke view via AJAX jika diperlukan
+    //     if ($request->ajax()) {
+    //         return view('exam.room.pagination_data', compact(
+    //             'soal_satuan', 'totalSoal', 'totalJawaban', 'ujian', 'peserta', 'paket_soal_id',
+    //             'jawaban_pilgan', 'jawaban_essay', 'jumlahSoal'
+    //         ))->render();
+    //     }
+    // }
+   public function pilganJawab(PilganJawabRequest $request)
+    {
+
+
+        $score = PaketHasSoal::where('paket_soal_id', $request->paket_soal_id)
+        ->where('soal_id', $request->id_soal)
+        ->first();
+
+        $poinDidapat = 0;
+        if ($request->status == 'T' && $score) {
+            $poinDidapat = $score->poin;
+        }
+
+        # Create or update PilganJawab
+        $posts = PilganJawab::updateOrCreate(
+            [
+                'peserta_ujian_id' => $request->peserta_ujian_id,
+                'soal_id' => $request->id_soal,
+            ],
+            [
+                'pilgan_id' => $request->pilgan_id,
+                'jawab' => $request->jawab_pilgan,
+                'score' => $poinDidapat,
+                'status' => $request->status,
+            ]
+        );
+
+        # Log activity
+        LogAktifitas::catat($posts->wasRecentlyCreated ? "Soal Pilihan Ganda Dijawab" : "Jawaban Soal Pilihan Ganda Diubah");
+
+        $paket_has_soal = PaketHasSoal::where('paket_soal_id', $request->paket_soal_id)->get();
+        $soal_ids = $paket_has_soal->pluck('soal_id');
+        $totalJawaban = DB::table('pilgan_jawab')
+        ->where('peserta_ujian_id', $request->peserta_ujian_id)
+        ->whereIn('soal_id', $soal_ids)
+        ->selectRaw('COUNT(*) as total')
+        ->unionAll(
+            DB::table('essay_jawab')
+                ->where('peserta_ujian_id', $request->peserta_ujian_id)
+                ->whereIn('soal_id', $soal_ids)
+                ->selectRaw('COUNT(*) as total')
+        )
+        ->sum('total');
+
+        // Hitung total soal
+        $totalSoal = count($soal_ids);
+
+        # Mengembalikan response JSON
+        return response()->json([
+            'posts' => $posts,
+            'totalSoal' => $totalSoal,
+            'totalJawaban' => $totalJawaban,
+        ]);
+
+    }
+
+    public function essayJawab(EssayJawabRequest $request){
+
+
+        # Create or update EssayJawab
+        $posts = EssayJawab::updateOrCreate(
+            [
+                'peserta_ujian_id' => $request->peserta_ujian_id,
+                'soal_id' => $request->id_soal,
+            ],
+            [
+                'essay_id' => $request->essay_id,
+                'jawab' => $request->jawaban_essay,
+            ]
+        );
+
+        # Log aktivitas berdasarkan aksi yang dilakukan
+        LogAktifitas::catat($posts->wasRecentlyCreated ? "Soal Essay Dijawab" : "Jawaban Soal Essay Diubah");
+
+        $paket_has_soal = PaketHasSoal::where('paket_soal_id', $request->paket_soal_id)->get();
+        $soal_ids = $paket_has_soal->pluck('soal_id');
+        $totalJawaban = DB::table('pilgan_jawab')
+        ->where('peserta_ujian_id', $request->peserta_ujian_id)
+        ->whereIn('soal_id', $soal_ids)
+        ->selectRaw('COUNT(*) as total')
+        ->unionAll(
+            DB::table('essay_jawab')
+                ->where('peserta_ujian_id', $request->peserta_ujian_id)
+                ->whereIn('soal_id', $soal_ids)
+                ->selectRaw('COUNT(*) as total')
+        )
+        ->sum('total');
+
+        // Hitung total soal
+        $totalSoal = count($soal_ids);
+
+
+        return response()->json([
+            'posts' => $posts,
+            'totalSoal' => $totalSoal,
+            'totalJawaban' => $totalJawaban,
+        ]);
+    }
+
+    public function akhiriUjian($id_ujian, $id_peserta_ujian){
+
+        $ujianId = decrypt($id_ujian);
+        $pesertaId = decrypt($id_peserta_ujian);
+
+        $pilganJawab = PilganJawab::where('peserta_ujian_id',$pesertaId)->sum('score');
+        $essayJawab = EssayJawab::where('peserta_ujian_id',$pesertaId)->sum('score');
+        $total_nilai = $pilganJawab + $essayJawab;
+        $update_finish_peserta = [
+            'waktu_berhenti' => date('Y-m-d H:i:s'),
+            'status_pengerjaan' => 2,
+            'nilai' =>$total_nilai,
+        ];
+        PesertaUjian::where('ujian_id', $ujianId)->where('id_peserta_ujian', $pesertaId )->update($update_finish_peserta);
+        if(auth()->user()->usertype == 'mahasiswa'){
+            LogAktifitas::catat("Ujian Diakhiri Peserta");
+            return response()->json([
+                'message' => 'Anda Telah Menyelesaikan Ujian.',
+                'redirect' => url('https://siakad-blok.unja.ac.id/home')
+            ]);
+        }else{
+            LogAktifitas::catat("Ujian Diakhiri Admin/Pengawas");
+            return redirect()->back()->with('success','Ujian Peserta Berhasil Diakhiri');
+        }
+
+    }
+
+    public function akhiriUjianTimeOut($id_ujian, $id_peserta_ujian){
+
+        $ujianId = decrypt($id_ujian);
+        $pesertaId = decrypt($id_peserta_ujian);
+
+
+        $pilganJawab = PilganJawab::where('peserta_ujian_id',$pesertaId)->sum('score');
+        $essayJawab = EssayJawab::where('peserta_ujian_id',$pesertaId)->sum('score');
+        $total_nilai = $pilganJawab + $essayJawab;
+        $update_finish_peserta = [
+            'waktu_berhenti' => date('Y-m-d H:i:s'),
+            'status_pengerjaan' => 2,
+            'nilai' =>$total_nilai,
+        ];
+        PesertaUjian::where('ujian_id', $ujianId)->where('id_peserta_ujian', $pesertaId )->update($update_finish_peserta);
+        LogAktifitas::catat("Ujian Berakhir Karena Waktu Habis");
+        return redirect('/dashboard');
+
+    }

@@ -1,0 +1,690 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Auth;
+use DB;
+use App\Models\Rolesmenus;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+
+class KelassistemblokController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index(Request $request)
+    {
+        $prodi = DB::table('prodi as a')
+            ->select("a.id_prodi", 'a.nama_prodi', 'b.nama_fakultas', 'a.sistem_blok')
+            ->leftjoin('fakultas as b', 'a.id_fakultas', '=', 'b.id_fakultas')
+            ->leftjoin("siakad_blok.userinstansi as c", 'a.id_prodi', '=', 'c.id_prodi')
+            ->where("c.id_users", Auth::user()->id)
+            ->where('a.status', '1')
+            ->where('a.sistem_blok', '>', 0)
+            ->orderby('b.nama_fakultas')
+            ->orderby('a.nama_prodi')
+            ->get();
+
+        $semester = DB::table("semester as a")
+            ->orderby("id_semester", 'DESC')
+            ->get();
+
+        $data = [
+            'prodi' => $prodi,
+            'semester' => $semester
+        ];
+
+        return $data;
+    }
+
+    function daftarmk(Request $r, $id, $sem)
+    {
+        if (empty($r->o)) {
+            $order = 'nama_matakuliah';
+        } else {
+            $order = $r->o;
+        }
+
+        $kelas = DB::table("kelas as a")
+            ->select("a.id_kelas", 'b.nama_matakuliah', 'c.nama_kurikulum', 'a.kode_kelas', 'a.jumlah_peserta', 'b.kode_matakuliah', 'd.nama_blok', 'd.tahun as tahun_blok', 'b.sks_total', 'd.id_blok')
+            ->leftjoin("matakuliah as b", 'a.id_matakuliah', '=', 'b.id_matakuliah')
+            ->leftjoin("kurikulum as c", 'a.id_kurikulum', '=', 'c.id_kurikulum')
+            ->leftjoin("siakad_blok.blok as d", 'b.id_blok', '=', 'd.id_blok')
+            ->where("sistem_blok", '1')
+            ->where("a.id_prodi", $id)
+            ->where("a.id_semester", $sem)
+            ->wherenull("a.id_kelas_parent")
+            ->orderby("b.nama_blok")
+            ->orderby("a.id_kelas")
+            ->paginate(4000);
+
+        $kelasmerge = DB::table("kelas as a")
+            ->wherenotnull("id_kelas_parent")
+            ->where("a.id_prodi", $id)
+            ->where("a.id_semester", $sem)
+            ->get();
+
+        $kelasmerg = array();
+
+        foreach ($kelasmerge as $km) {
+            $idparent = $km->id_kelas_parent;
+            $id_kelas = $km->id_kelas;
+            $kelasmerg[$idparent][] = $km->jumlah_peserta;
+        }
+
+        $data = array();
+
+        $data['kelasmerge'] = $kelasmerg;
+        $data['kelas'] = $kelas;
+
+        return response()->json($data);
+    }
+
+    function update(Request $req)
+    {
+        $data = array();
+        if ($req->sistem_blok == '') {
+            $data['sistem_blok'] = null;
+            $data['nama_blok'] = null;
+        } else {
+            $data['sistem_blok'] = 1;
+            $data['nama_blok'] = $req->nama_blok;
+        }
+
+        return DB::table("matakuliah")
+            ->where("id_matakuliah", $req->id_matakuliah)
+            ->update($data);
+    }
+
+    function getdatablok(Request $r)
+    {
+        $jenisblok = DB::table("siakad_blok.mapping_blok_jenisblok as a")
+            ->leftjoin("siakad_blok.jenisblok as b", 'a.id_jenis_blok', '=', 'b.id_jenisblok')
+            ->where("a.id_blok", $r->id_blok)
+            ->orderby("a.nomor_urut")
+            ->get();
+        $data = array();
+        $i = 0;
+        foreach ($jenisblok as $jb) {
+            $data[$i] = $jb;
+            $dosenpengampu = array();
+            $kelasblok = DB::table("siakad_blok.kelompok_belajar as b")
+                ->select("b.*", DB::raw('(b.id_kelompok_belajar * 0) as dosenpengampu, (b.id_kelompok_belajar * 0) as daftarmahasiswa'))
+                ->where("b.id_mapping_jenis_blok", $jb->id)
+                ->where("b.id_kelas", $r->id_kelas)
+                ->orderby("b.nomor_urut")
+                ->orderby("b.nama_kelompok_belajar")
+                ->get();
+
+            if (count($kelasblok) > 0) {
+                $data[$i]->rombel = $kelasblok;
+            } else {
+                $data[$i]->rombel = array();
+            }
+            $i++;
+        }
+
+        $datakirim = array();
+
+        $koordinator = DB::table("siakad_blok.koordinator_blok as c")
+            ->where("c.id_kelas", $r->id_kelas)
+            ->first();
+
+        if ($koordinator) {
+            $datakirim['koordinator'] = $koordinator;
+        } else {
+            $datakirim['koordinator'] = null;
+        }
+
+        $datakirim['data'] = $data;
+
+        $datakirim['eid_kelas'] = Crypt::encrypt($r->id_kelas);
+        return $datakirim;
+    }
+
+    function simpankelbel(Request $r)
+    {
+        $idkelbel = $r->id_kelompok_belajar;
+        if ($idkelbel == '') {
+            $data = [
+                'id_kelas' => $r->id_kelas,
+                'id_mapping_jenis_blok' => $r->id_mapping_blok_jenisblok,
+                'id_blok' => $r->id_blok,
+                'id_semester' => $r->id_semester,
+                'id_jenis_blok' => $r->id_jenis_blok,
+                'nomor_urut' => $r->nomor_urut,
+                'nama_kelompok_belajar' => $r->kelompok_belajar,
+                'keterangan' => $r->keterangan,
+                'created_at' => date("Y-m-d H:i:s"),
+                'updated_at' => date("Y-m-d H:i:s"),
+            ];
+
+            $simpan = DB::table("siakad_blok.kelompok_belajar")
+                ->insert($data);
+            if ($simpan) {
+                return response('berhasil menyimpan data', 201);
+            }
+        } else {
+            $data = [
+                'nama_kelompok_belajar' => $r->kelompok_belajar,
+                'nomor_urut' => $r->nomor_urut,
+                'keterangan' => $r->keterangan,
+                'updated_at' => date("Y-m-d H:i:s"),
+            ];
+
+            $simpan = DB::table("siakad_blok.kelompok_belajar")
+                ->where('id_kelompok_belajar', $r->id_kelompok_belajar)
+                ->update($data);
+            if ($simpan) {
+                return response('Berhasil update data', 200);
+            }
+        }
+    }
+
+    function getdatadosenpengampu(Request $r)
+    {
+        $pokokmateri = DB::table("siakad_blok.materi_perkuliahan_blok as a")
+            ->select("a.*", 'b.id_jenis_blok', 'b.id_blok')
+            ->leftjoin("siakad_blok.mapping_blok_jenisblok as b", 'a.id_mapping_blok', '=', 'b.id')
+            ->where("b.id_blok", $r->id_blok)
+            ->where("b.id_jenis_blok", $r->id_jenis_blok)
+            ->orderby('a.nomor_urut')
+            ->get();
+        $i = 0;
+        $data = array();
+
+        foreach ($pokokmateri as $p) {
+            $data[$i] = $p;
+
+            $mat = DB::table('siakad_blok.materi_perkuliahan_rincian as a')
+                ->select("a.*", 'b.id_pegawai', 'b.id_dosen', 'b.nama', 'b.gelar_depan', 'b.gelar_belakang', 'b.nip', 'b.id_jabfung', 'b.sks', 'b.id_dosen_pengampu')
+                ->leftjoin('siakad_blok.dosen_pengampu as b', function ($join) use ($r) {
+                    $join->on("a.id_materi_perkuliahan_rincian", '=', 'b.id_materi_perkuliahan_rincian')
+                        ->where("b.id_kelompok_belajar", $r->id_kelompok_belajar);
+                })
+                ->where('id_materi_perkuliahan_blok', $p->id_materi_perkuliahan_blok)
+                ->orderby("a.nomor_urut")
+                ->orderby("b.id_dosen_pengampu")
+                ->get();
+
+            if (count($mat) > 0) {
+                $data[$i]->rincian = $mat;
+            } else {
+                $data[$i]->rincian = array();
+            }
+            $i++;
+        }
+        return $data;
+    }
+
+    function getdosenlist(Request $r)
+    {
+        $data = DB::table('dosen as a')
+            ->select("b.id_pegawai", 'b.nip', 'b.nama_pegawai', 'b.gelar_depan', 'b.gelar_belakang', 'p.nama_prodi', 'b.jabatan as id_jabfung', 'a.id_dosen')
+            ->join("pegawai as b", 'a.id_pegawai', '=', 'b.id_pegawai')
+            ->leftjoin("prodi as p", 'p.id_prodi', '=', 'a.id_prodi')
+            ->where("b.nama_pegawai", 'LIKE', '%' . $r->cari . '%')
+            ->wherenotnull('a.id_dosen')
+            ->whereIn('id_status_keaktifan_pegawai', [1, 24])
+            ->orderby('b.nama_pegawai')
+            ->paginate(10);
+
+        return $data;
+    }
+
+    function postdosenpengampu(Request $r)
+    {
+        $materi = $r->materi;
+
+        if ($r->jenis_input == 1) {
+
+            if ($materi !== null) {
+                foreach ($materi as $m) {
+                    //cek apakah sudah ada dosen;
+                    $cekdosen = DB::table("siakad_blok.dosen_pengampu as a")
+                        ->where("id_kelompok_belajar", $r->id_kelbelajar)
+                        ->where("id_dosen_pengampu", $m['id_dosen_pengampu'])
+                        ->first();
+                    if ($cekdosen) {
+                        //mode update
+                        $data = [
+                            'id_pegawai' => $r->dosen['id_pegawai'],
+                            'id_dosen' => $r->dosen['id_dosen'],
+                            'nama' => $r->dosen['nama_pegawai'],
+                            'gelar_depan' => $r->dosen['gelar_depan'],
+                            'gelar_belakang' => $r->dosen['gelar_belakang'],
+                            'nip' => $r->dosen['nip'],
+                            'id_jabfung' => $r->dosen['id_jabfung'],
+                            'sks' => 0,
+                            'updated_at' => date("Y-m-d H:i:s")
+                        ];
+
+                        DB::table("siakad_blok.dosen_pengampu")
+                            ->where("id_dosen_pengampu", $cekdosen->id_dosen_pengampu)
+                            ->update($data);
+                    } else {
+                        //mode insert
+                        $data = [
+                            'id_kelompok_belajar' => $r->id_kelbelajar,
+                            'id_materi_perkuliahan_rincian' => $m['id_materi'],
+                            'id_semester' => $r->id_semester,
+                            'id_pegawai' => $r->dosen['id_pegawai'],
+                            'id_dosen' => $r->dosen['id_dosen'],
+                            'nama' => $r->dosen['nama_pegawai'],
+                            'gelar_depan' => $r->dosen['gelar_depan'],
+                            'gelar_belakang' => $r->dosen['gelar_belakang'],
+                            'nip' => $r->dosen['nip'],
+                            'id_jabfung' => $r->dosen['id_jabfung'],
+                            'sks' => 0,
+                            'created_at' => date("Y-m-d H:i:s"),
+                            'updated_at' => date("Y-m-d H:i:s")
+                        ];
+
+                        DB::table("siakad_blok.dosen_pengampu")
+                            ->insert($data);
+                    }
+                }
+            }
+        } else {
+            $id_materiini = '';
+            foreach ($materi as $m) {
+                if ($id_materiini != $m['id_materi']) {
+                    $data = [
+                        'id_kelompok_belajar' => $r->id_kelbelajar,
+                        'id_materi_perkuliahan_rincian' => $m['id_materi'],
+                        'id_semester' => $r->id_semester,
+                        'id_pegawai' => $r->dosen['id_pegawai'],
+                        'id_dosen' => $r->dosen['id_dosen'],
+                        'nama' => $r->dosen['nama_pegawai'],
+                        'gelar_depan' => $r->dosen['gelar_depan'],
+                        'gelar_belakang' => $r->dosen['gelar_belakang'],
+                        'nip' => $r->dosen['nip'],
+                        'id_jabfung' => $r->dosen['id_jabfung'],
+                        'sks' => 0,
+                        'created_at' => date("Y-m-d H:i:s"),
+                        'updated_at' => date("Y-m-d H:i:s")
+                    ];
+
+                    DB::table("siakad_blok.dosen_pengampu")
+                        ->insert($data);
+                }
+                $id_materiini = $m['id_materi'];
+            }
+        }
+        return response('ok', 200);
+    }
+
+    function getdatacopyblok(Request $r)
+    {
+        $datablok = DB::table("siakad_blok.kelompok_belajar")
+            ->where("id_kelompok_belajar", $r->id_kelompok_belajar)
+            ->first();
+        if ($datablok) {
+            $datablok = DB::table("siakad_blok.kelompok_belajar as a")
+                ->select("b.nama_blok", 'd.nama_matakuliah', 'd.kode_matakuliah', 'a.id_semester', 'a.nama_kelompok_belajar', 'a.id_kelompok_belajar', 'a.id_blok', 'a.id_jenis_blok')
+                ->leftjoin("siakad_blok.blok as b", 'a.id_blok', '=', 'b.id_blok')
+                ->leftjoin("kelas as c", 'a.id_kelas', '=', 'c.id_kelas')
+                ->leftjoin("matakuliah as d", 'c.id_matakuliah', '=', 'd.id_matakuliah')
+                ->where("a.id_blok", $datablok->id_blok)
+                ->where("a.id_jenis_blok", $datablok->id_jenis_blok)
+                ->where("a.id_kelompok_belajar", "!=", $r->id_kelompok_belajar)
+                ->where("a.id_semester", $r->id_semester)
+                ->orderby("c.id_matakuliah")
+                ->orderby("a.nama_kelompok_belajar")
+                ->get();
+
+            if (count($datablok) > 0) {
+                return $datablok;
+            } else {
+                return response('', 203);
+            }
+        } else {
+            return response('', 203);
+        }
+    }
+
+    function simpandatadosenbyreferensi(Request $r)
+    {
+        $materi = $r->materi;
+
+        $dataupdate = 0;
+        $datainsert = 0;
+        $error = 0;
+        DB::table("siakad_blok.dosen_pengampu")
+            ->where("id_kelompok_belajar", '=', $r->datamaster)
+            ->delete();
+
+        foreach ($materi as $m) {
+            //mode insert
+            $data = [
+                'id_kelompok_belajar' => $r->datamaster,
+                'id_materi_perkuliahan_rincian' => $m['id_materi_perkuliahan_rincian'],
+                'id_semester' => $r->id_semester,
+                'id_pegawai' => $m['id_pegawai'],
+                'id_dosen' => $m['id_dosen'],
+                'nama' => $m['nama'],
+                'gelar_depan' => $m['gelar_depan'],
+                'gelar_belakang' => $m['gelar_belakang'],
+                'nip' => $m['nip'],
+                'id_jabfung' => $m['id_jabfung'],
+                'sks' => 0,
+                'created_at' => date("Y-m-d H:i:s"),
+                'updated_at' => date("Y-m-d H:i:s")
+            ];
+
+            $simpan = DB::table("siakad_blok.dosen_pengampu")
+                ->insert($data);
+
+            if ($simpan) {
+                $datainsert++;
+            } else {
+                $error++;
+            }
+        }
+        $hasil = "Data disimpan : (" . $datainsert . "), Diperbarui : ( " . $dataupdate . "), error : (" . $error . ")";
+
+        if ($simpan) {
+            return response($hasil, 200);
+        } else {
+            return response('data gagal disimpan', 202);
+        }
+    }
+
+    function deletedatadosenpengampu(Request $r)
+    {
+
+        $materi = $r->materi;
+
+        foreach ($materi as $m) {
+
+            $cekdata = DB::table("siakad_blok.dosen_pengampu as a")
+                ->select("a.id_pegawai", 'c.id_prodi', 'c.id_semester', 'a.nama')
+                ->leftjoin("siakad_blok.kelompok_belajar as b", 'a.id_kelompok_belajar', '=', 'b.id_kelompok_belajar')
+                ->leftjoin("kelas as c", 'c.id_kelas', '=', 'b.id_kelas')
+                ->where("a.id_kelompok_belajar", $r->id_kelompok_belajar)
+                ->where("a.id_dosen_pengampu", $m['id_dosen_pengampu'])
+                ->first();
+
+            if ($cekdata) {
+
+                DB::table("siakad_blok.dosen_pengampu")
+                    ->where("id_kelompok_belajar", $r->id_kelompok_belajar)
+                    ->where("id_dosen_pengampu", $m['id_dosen_pengampu'])
+                    ->delete();
+            }
+        }
+        return response('berhasil dihapus', 200);
+    }
+
+    function getdatamahasiswakelas(Request $r)
+    {
+        $getmhs = DB::table("siakad_blok.mahasiswa_rombel")
+            ->where("id_kelompok_belajar", $r->id_kelompok_belajar)
+            ->orderby("no_mhs")
+            ->get();
+
+        if (count($getmhs) == 0) {
+            return response('Belum ada daftar nama', 202);
+        } else {
+            return $getmhs;
+        }
+    }
+
+    function getdatamahasiswakontrakmk(Request $r)
+    {
+
+        if (!$r->showdata) {
+            $showdata = 10;
+        } else {
+            $showdata = $r->showdata;
+        }
+
+        if ($r->jenis_blok == 2) {
+            $mhs = DB::table('krs as a')
+                ->select("c.no_mhs", 'd.nama_mahasiswa', 'c.angkatan', 'b.id_kelas_parent', 'a.id_krs', 'a.id_mhs_pt')
+                ->leftjoin('kelas as b', 'a.id_kelas', '=', 'b.id_kelas')
+                ->leftjoin('mhs_pt as c', 'a.id_mhs_pt', '=', 'c.id_mhs_pt')
+                ->leftjoin('mahasiswa as d', 'd.id_mahasiswa', '=', 'c.id_mahasiswa')
+                ->leftjoin("siakad_blok.mahasiswa_rombel as e", function ($join) use ($r) {
+                    $join->on("a.id_mhs_pt", '=', 'e.id_mhs_pt')
+                        ->where('e.id_kelas', '=', $r->id_kelas)
+                        ->where('e.id_jenis_blok', '=', $r->id_jenis_blok);
+                })
+                ->where(function ($query) use ($r) {
+                    $query->where('b.id_kelas', $r->id_kelas)
+                        ->orwhere('b.id_kelas_parent', $r->id_kelas);
+                })
+                // ->wherenull('e.id_mahasiswa_rombel')
+                ->groupby("a.id_mhs_pt")
+                ->orderby("c.no_mhs")
+                ->paginate($showdata);
+        } else {
+            $mhs = DB::table('krs as a')
+                ->select("c.no_mhs", 'd.nama_mahasiswa', 'c.angkatan', 'b.id_kelas_parent', 'a.id_krs', 'a.id_mhs_pt')
+                ->leftjoin('kelas as b', 'a.id_kelas', '=', 'b.id_kelas')
+                ->leftjoin('mhs_pt as c', 'a.id_mhs_pt', '=', 'c.id_mhs_pt')
+                ->leftjoin('mahasiswa as d', 'd.id_mahasiswa', '=', 'c.id_mahasiswa')
+                ->leftjoin("siakad_blok.mahasiswa_rombel as e", function ($join) use ($r) {
+                    $join->on("a.id_mhs_pt", '=', 'e.id_mhs_pt')
+                        ->where('e.id_kelas', '=', $r->id_kelas)
+                        ->where('e.id_jenis_blok', '=', $r->id_jenis_blok);
+                })
+                ->where(function ($query) use ($r) {
+                    $query->where('b.id_kelas', $r->id_kelas)
+                        ->orwhere('b.id_kelas_parent', $r->id_kelas);
+                })
+                ->wherenull('e.id_mahasiswa_rombel')
+                ->groupby("a.id_mhs_pt")
+                ->orderby("c.no_mhs")
+                ->paginate($showdata);
+        }
+        return $mhs;
+    }
+
+    function simpanrombelmhs(Request $r)
+    {
+        $mhsarray = $r->daftar_mhs;
+
+        $datamhs = $r->data_mhs;
+        $dd = array();
+        $insert = 0;
+        $error = 0;
+        $update = 0;
+
+        foreach ($datamhs as $d) {
+            $id_mhspt = $d['id_mhs_pt'];
+            $dd[$id_mhspt]['id_mhs_pt'] = $id_mhspt;
+            $dd[$id_mhspt]['no_mhs'] = $d['no_mhs'];
+            $dd[$id_mhspt]['nama_mahasiswa'] = $d['nama_mahasiswa'];
+            $dd[$id_mhspt]['angkatan'] = $d['angkatan'];
+        }
+
+        foreach ($mhsarray as $m) {
+            //cek data
+            $cekmhs = DB::table("siakad_blok.mahasiswa_rombel as a")
+                ->select("a.id_mahasiswa_rombel")
+                ->where('a.id_kelas', $r->id_kelas)
+                ->where('a.id_jenis_blok', $r->id_jenis_blok)
+                ->where('a.id_mhs_pt', $m)
+                ->where('a.id_kelompok_belajar', $r->id_kelompok_belajar)
+                ->first();
+
+            if (!$cekmhs) {
+                if (isset($dd[$m])) {
+                    //simpan data ke tabel
+                    $data = [
+                        'id_kelompok_belajar' => $r->id_kelompok_belajar,
+                        'id_kelas' => $r->id_kelas,
+                        'id_jenis_blok' => $r->id_jenis_blok,
+                        'id_mhs_pt' => $dd[$m]['id_mhs_pt'],
+                        'no_mhs' => $dd[$m]['no_mhs'],
+                        'nama_mahasiswa' => $dd[$m]['nama_mahasiswa'],
+                        'angkatan' => $dd[$m]['angkatan'],
+                        'created_at' => date("Y-m-d H:i:s"),
+                        'updated_at' => date("Y-m-d H:i:s"),
+                    ];
+
+                    $simpan = DB::table("siakad_blok.mahasiswa_rombel")
+                        ->insert($data);
+
+                    if ($simpan) {
+                        $insert++;
+                    } else {
+                        $error++;
+                    }
+                }
+            } else {
+                $update++;
+            }
+        }
+        return response("ditambahkan = " . $insert . " gagal = " . $error . " sudah terdaftar = " . $update, 200);
+    }
+
+    function hapuskelompokbelajar(Request $r)
+    {
+        //cek data mahasiswa
+        $err = 0;
+        $mhs = DB::table("siakad_blok.mahasiswa_rombel")
+            ->where("id_kelompok_belajar", $r->id_kelompok_belajar)
+            ->count();
+
+        if ($mhs > 0) {
+            $err = 1;
+        }
+
+        //cek dosen pengampu
+        $dsn = DB::table("siakad_blok.dosen_pengampu")
+            ->where("id_kelompok_belajar", $r->id_kelompok_belajar)
+            ->wherenotnull("id_pegawai")
+            ->count();
+
+        if ($dsn > 0) {
+            $err = 1;
+        }
+
+        if ($err > 0) {
+            return response("Masih terdapat $dsn dosen dan $mhs mahasiswa dikelas kosongkan terlebih dahulu dosen dan mahasiswa", 202);
+        } else {
+            $del = DB::table("siakad_blok.kelompok_belajar")
+                ->where("id_kelompok_belajar", $r->id_kelompok_belajar)
+                ->delete();
+
+            if ($del) {
+                return response($r->nama_kelompok_belajar . " berhasil dihapus", 200);
+            }
+        }
+    }
+
+    function hapusmhstunggal(Request $r)
+    {
+        DB::table('siakad_blok.mahasiswa_rombel')
+            ->where("id_mahasiswa_rombel", $r->id_mahasiswa_rombel)
+            ->delete();
+        return response('data dihapus', 200);
+    }
+
+    function inputkoordinator(Request $r)
+    {
+        try {
+            $id = Crypt::decrypt($r->eidkelas);
+        } catch (DecryptException $e) {
+            $id = "";
+        }
+
+        if ($id > 0) {
+            $cek_data = DB::table('siakad_blok.koordinator_blok')
+                ->where('id_kelas', $id)
+                ->count();
+
+            $data = array();
+
+            $pegawai = $r->pegawai;
+
+            $data['update_at'] = date("Y-m-d H:i:s");
+            $data['id_semester'] = $r->id_semester;
+
+            if ($r->jenis == 1) {
+                $data['id_pegawai_koor'] = $pegawai['id_pegawai'];
+                $data['data_koor'] = json_encode($pegawai);
+            } else {
+                $data['id_pegawai_ass'] = $pegawai['id_pegawai'];
+                $data['data_ass'] = json_encode($pegawai);
+            }
+
+
+            if ($cek_data > 0) {
+                //update
+                $simpan = DB::table('siakad_blok.koordinator_blok')
+                    ->where('id_kelas', $id)
+                    ->update($data);
+            } else {
+                $data['id_kelas'] = $id;
+                $simpan = DB::table('siakad_blok.koordinator_blok')
+                    ->insert($data);
+            }
+        }
+        return $simpan;
+    }
+
+    function update_rekap($id_pegawai, $id_prodi, $id_semester, $nama)
+    {
+        $sksdosen = DB::table("siakad_blok.dosen_pengampu as a")
+            ->select("a.id_pegawai", 'b.waktu', 'e.pembagi_sks', 'a.nama')
+            ->leftjoin("siakad_blok.materi_perkuliahan_rincian as b", 'a.id_materi_perkuliahan_rincian', '=', 'b.id_materi_perkuliahan_rincian')
+            ->leftjoin("siakad_blok.kelompok_belajar as c", 'a.id_kelompok_belajar', '=', 'c.id_kelompok_belajar')
+            ->leftjoin("kelas as d", 'c.id_kelas', '=', 'd.id_kelas')
+            ->leftjoin("siakad_blok.jenisblok as e", 'e.id_jenisblok', '=', 'c.id_jenis_blok')
+            ->where('a.id_pegawai', $id_pegawai)
+            ->where("a.id_semester", $id_semester)
+            ->where("d.id_prodi", $id_prodi)
+            ->wherenotnull("e.id_jenisblok")
+            ->get();
+
+        $subtotal = 0;
+        $jmlhpertemuan = 0;
+        foreach ($sksdosen as $vv) {
+            echo $vv->nama . "=" . $vv->waktu . "/" . $vv->pembagi_sks . "\n";
+            $sksd = $vv->waktu / $vv->pembagi_sks;
+            $subtotal += $sksd;
+            $jmlhpertemuan++;
+        }
+
+        $datasim = array();
+        $datasim['id_pegawai'] = $id_pegawai;
+        $datasim['nama'] = $nama;
+        $datasim['id_prodi'] = $id_prodi;
+        $datasim['id_semester'] = $id_semester;
+        $datasim['sks_total'] = $subtotal;
+        $datasim['Jml_pertemuan'] = $jmlhpertemuan;
+        $datasim['update_at'] = date("Y-m-d H:i:s");
+
+        $cekdb = DB::table("siakad_blok.rekap_ajar_dosen")
+            ->where("id_pegawai", $id_pegawai)
+            ->where("id_semester", $id_semester)
+            ->where("id_prodi", $id_prodi)
+            ->first();
+        if ($cekdb) {
+            DB::table("siakad_blok.rekap_ajar_dosen")
+                ->where("id_pegawai", $id_pegawai)
+                ->where("id_semester", $id_semester)
+                ->where("id_prodi", $id_prodi)
+                ->update($datasim);
+        } else {
+            DB::table("siakad_blok.rekap_ajar_dosen")->insert($datasim);
+        }
+    }
+}

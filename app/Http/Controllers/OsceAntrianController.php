@@ -34,17 +34,20 @@ class OsceAntrianController extends Controller
         $idJadwal = decrypt($id_jadwal_osce);
         $this->ensureAssignment($idJadwal);
         $jadwal = JadwalOsce::findOrFail($idJadwal);
+        $jumlahAntrian = DB::table('peserta_station_osce')
+            ->select('id_jadwal_osce', 'id_jenis_osce', DB::raw('COUNT(id_peserta_station_osce) as jumlah_antrian'))
+            ->whereIn('status', ['menunggu', 'sedang_dinilai'])
+            ->groupBy('id_jadwal_osce', 'id_jenis_osce');
+
         $station = DB::table('jadwal_has_stase as a')
             ->join('jenis_osce as b', 'b.id_jenis_osce', '=', 'a.id_jenis_osce')
-            ->leftJoin('peserta_station_osce as ps', function ($join) {
+            ->leftJoinSub($jumlahAntrian, 'ps', function ($join) {
                 $join->on('ps.id_jadwal_osce', '=', 'a.id_jadwal_osce')
-                    ->on('ps.id_jenis_osce', '=', 'a.id_jenis_osce')
-                    ->whereIn('ps.status', ['menunggu', 'sedang_dinilai']);
+                    ->on('ps.id_jenis_osce', '=', 'a.id_jenis_osce');
             })
             ->where('a.id_jadwal_osce', $idJadwal)
             ->when(!auth()->user()->hasRole('developer'), fn ($q) => $q->where('a.id_pegawai', $this->idPenguji()))
-            ->groupBy('a.id_jadwal_has_stase', 'a.id_jadwal_osce', 'a.id_jenis_osce', 'a.id_pegawai', 'b.nama_jenis_osce')
-            ->select('a.*', 'b.nama_jenis_osce', DB::raw('COUNT(ps.id_peserta_station_osce) as jumlah_antrian'))
+            ->select('a.*', 'b.nama_jenis_osce', DB::raw('COALESCE(ps.jumlah_antrian, 0) as jumlah_antrian'))
             ->orderBy('b.nama_jenis_osce')
             ->get();
 

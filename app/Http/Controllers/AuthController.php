@@ -45,6 +45,7 @@ class AuthController extends Controller
                         'id_asal' => $source->id,
                         'username' => $source->username,
                         'name' => $source->name,
+                        'email' => $source->email,
                         'usertype' => $type,
                         'password' => Hash::make($password),
                     ]);

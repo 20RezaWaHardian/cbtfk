@@ -22,17 +22,22 @@ class KategoriSoalDataTable extends DataTable
                     return '-';
                 }
 
-                $kelas = DB::table('kelas as a')
-                    ->select('a.id_kelas', 'a.kode_kelas', 'b.id_blok', 'b.nama_blok')
-                    ->join('blok as b', 'a.id_blok', '=', 'b.id_blok')
-                    ->where('a.id_kelas', $row->id_kelas)
+                $kelas = DB::table('sistembl_siakad-uin.blok as a')
+                    ->select(
+                        'a.id',
+                        'a.kode',
+                        'a.nama',
+                        'a.semester_id',
+                        'a.prodi_id'
+                    )
+                    ->where('a.id', $row->id_kelas)
                     ->first();
 
                 if (! $kelas) {
                     return '-';
                 }
 
-                return $kelas->nama_blok . ' - ' . $kelas->kode_kelas;
+                return $kelas->nama . ' - ' . $kelas->kode;
             })
             ->editColumn('jumlah', function ($row) {
                 return '<a href="' . route('bank-soal.soal.showSoalByKategori', ['id' => $row->id_kategori_soal]) . '" class="btn btn-info btn-sm">Lihat <br>' . $row->jumlah_sub_kategori . ' Sub Kategori <br>' . $row->jumlah . ' Soal</a>';

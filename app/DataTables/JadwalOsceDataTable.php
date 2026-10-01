@@ -32,7 +32,7 @@ class JadwalOsceDataTable extends DataTable
                 return $r->tanggal_ujian ? date("d-m-Y", strtotime($r->tanggal_ujian)) : '-';
             })
             ->addColumn('blok_id',function($r){
-                return optional($r->blok)->kode ?: '-';
+                return optional($r->blok)->nama ?: '-';
             })
             ->addColumn('waktu_mulai',function($r){
 

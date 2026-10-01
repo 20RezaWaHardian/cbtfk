@@ -109,7 +109,7 @@ class UjianSayaDataTable extends DataTable
     {
         $mhs_pt_id = auth()->user()->userSistemBlok->mahasiswa->id_mahasiswa ?? null;
         return $model->where('id_mhs_pt', $mhs_pt_id)
-                ->with('ujian', 'mahasiswa_rombel');
+                ->with('ujian');
         
     }
 

@@ -35,13 +35,13 @@ class UjianSayaDataTable extends DataTable
                     $output .= '-<br>';
                 }
 
-                if ($row->need_kuesioner == 1) {
-                    if ($row->isi_kuesioner == 0) {
-                        $output .= 'Klik untuk <a href="' . url('kuesioner/' . $row->id_peserta_ujian . '/participant/' . $row->ujian_id . '/kuesionerku/' . $row->kuesioner_id) . '">mengisi Kuesioner</a><br>';
-                    } else {
-                        $output .= 'Anda telah mengisi kuesioner<br>';
-                    }
-                }
+                // if ($row->need_kuesioner == 1) {
+                //     if ($row->isi_kuesioner == 0) {
+                //         $output .= '<br> Klik untuk <a href="' . url('kuesioner/' . $row->id_peserta_ujian . '/participant/' . $row->ujian_id . '/kuesionerku/' . $row->kuesioner_id) . '">mengisi Kuesioner</a><br>';
+                //     } else {
+                //         $output .= 'Anda telah mengisi kuesioner<br>';
+                //     }
+                // }
 
                 return $output;
             })

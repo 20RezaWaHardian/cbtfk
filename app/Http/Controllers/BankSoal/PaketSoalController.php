@@ -153,7 +153,7 @@ class PaketSoalController extends Controller
             $totalSoal = $paket_has_soal->count();
 
             $totalPoin = 100;
-            round($totalPoin / $totalSoal, 2);
+            $poinPerSoal = round($totalPoin / $totalSoal, 2);
 
             foreach ($paket_has_soal as $item) {
                 $item->update(['poin' => $poinPerSoal]);

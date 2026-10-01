@@ -121,7 +121,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::get('/exam24/finish/{id_ujian}/participant/{id_peserta_ujian}', 'akhiriUjian')->name('peserta.finishUjian');
         Route::get('/exam24/finish/{id_ujian}/participant/{id_peserta_ujian}/time-out', 'akhiriUjianTimeOut')->name('peserta.finishUjianTimeOut');
-        Route::get('/exam24/finish/{id_ujian}/participant/{id_peserta_ujian}/exit-fullscreen', 'akhiriUjianExitFullScreen')->name('peserta.finishUjianExitFullScreen');
+        Route::post('/exam24/finish/{id_ujian}/participant/{id_peserta_ujian}/exit-fullscreen', 'akhiriUjianExitFullScreen')->name('peserta.finishUjianExitFullScreen');
 
         Route::get('/latency-peserta', function () {
             return response()->json(['status' => 'ok']);

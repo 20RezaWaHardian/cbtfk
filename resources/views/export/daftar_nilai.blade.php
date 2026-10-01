@@ -17,15 +17,14 @@
     <table width="100%">
         <tr>
             <td width="10%">
-                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('/assets/images/logos/logo_unja.png'))) }}"
+                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('/assets/images/logos/logouin.png'))) }}"
                     style="width:100px">
             </td>
             <td align="center" style="font-size: 14px;">
-                <H3 style="color:#eb5707">KEMENTERIAN PENDIDIKAN TINGGI, SAINS DAN TEKNOLOGI</H3>
-                <H3 style="color:#eb5707">UIN STS Jambi</H3>
-                <H3 style="color:#eb5707">Fakultas Kedokteran dan Ilmu Kesehatan</H3>
-                <p style="color:#065ec2">Kampus Pinang Masak, Jl. Raya Jambi - Muara Bulian KM. 15, Mendalo Indah, Jambi.
-                    Kode Pos 36361 Telp. (0741) 583377, 583111 </p>
+                <H3 style="color:#eb5707">KEMENTERIAN AGAMA</H3>
+                <H3 style="color:#eb5707">UNIVERSITAS ISLAM NEGERI SULTAN THAHA SAIFUDDIN JAMBI</H3>
+                <H3 style="color:#eb5707">Fakultas Kedokteran</H3>
+                <p style="color:#065ec2">Jalan Lintas Jambi - Muaro Bulian KM. 16 Simpang Sungai Duren Kab. Muaro Jambi 36363</p>
 
 
             </td>
@@ -58,8 +57,8 @@
         @foreach($peserta as $p)
             <tr>
                 <td>{{$loop->iteration}}</td>
-                <td>{{$p->mhs_pt->no_mhs}}</td>
-                <td>{{$p->mhs_pt->mahasiswa->nama_mahasiswa}}</td>
+                <td>{{$p->mahasiswa->nim}}</td>
+                <td>{{$p->mahasiswa->nama}}</td>
                 <td>{{ \Carbon\Carbon::parse($p->mulai_ujian)->format('H:i:s') }}</td>
                 @if($p->waktu_berhenti)
                 <td>{{ \Carbon\Carbon::parse($p->waktu_berhenti)->format('H:i:s') }}</td>

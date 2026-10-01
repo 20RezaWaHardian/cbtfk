@@ -48,7 +48,7 @@ class KuesionerPesertaController extends Controller
             return view('kuesioner.peserta.form-kuesioner-sebelum', compact('kuesioner', 'ujian', 'peserta','jawaban','can'));
         } else {
             LogAktifitas::catat("Gagal Menemukan Kuesioner");
-            return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk  Mengisi Kuesioner!');
+            return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk  Mengisi Kuesioner!');
         }
     }
 
@@ -139,7 +139,7 @@ class KuesionerPesertaController extends Controller
             return view('kuesioner.peserta.form-kuesioner', compact('kuesioner', 'ujian', 'peserta'));
         } else {
             LogAktifitas::catat("Gagal Menemukan Kuesioner");
-            return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk  Mengisi Kuesioner!');
+            return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk  Mengisi Kuesioner!');
         }
     }
 

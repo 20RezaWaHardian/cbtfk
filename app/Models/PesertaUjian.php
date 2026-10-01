@@ -12,10 +12,10 @@ class PesertaUjian extends Model
     public $primaryKey = 'id_peserta_ujian';
     protected $guarded = [];
 
-    public function mahasiswa_rombel()
-    {
-        return $this->belongsTo(SBMahasiswaRombel::class, 'mahasiswa_rombel_id', 'id_mahasiswa_rombel');
-    }
+    // public function mahasiswa_rombel()
+    // {
+    //     return $this->belongsTo(SBMahasiswaRombel::class, 'mahasiswa_rombel_id', 'id_mahasiswa_rombel');
+    // }
 
     public function ujian()
     {

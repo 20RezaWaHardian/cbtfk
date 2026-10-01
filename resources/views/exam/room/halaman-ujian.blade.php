@@ -480,10 +480,10 @@
 
         load_data(firstSoalId);
 
-        //Baru
-        let warningShown = false; // status peringatan pertama
+        // Pengamanan ujian aktif setelah peserta berhasil masuk fullscreen.
+        let examSecurityActive = false;
+        let violationProcessing = false;
 
-        // Tombol untuk masuk fullscreen
         document.getElementById('fullscreenBtn').addEventListener('click', function () {
             enableFullscreen();
             $('#modalFullscreen').modal('hide');
@@ -491,29 +491,31 @@
         });
 
         function enableFullscreen() {
-            let docElement = document.documentElement;
+            const docElement = document.documentElement;
+
             if (docElement.requestFullscreen) {
                 docElement.requestFullscreen();
-            } else if (docElement.mozRequestFullScreen) { // Firefox
+            } else if (docElement.mozRequestFullScreen) {
                 docElement.mozRequestFullScreen();
-            } else if (docElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            } else if (docElement.webkitRequestFullscreen) {
                 docElement.webkitRequestFullscreen();
-            } else if (docElement.msRequestFullscreen) { // IE/Edge
+            } else if (docElement.msRequestFullscreen) {
                 docElement.msRequestFullscreen();
             }
         }
 
-        // ✅ Deteksi keluar fullscreen
-        document.addEventListener("fullscreenchange", function() {
-            if(document.fullscreenElement){
+        document.addEventListener("fullscreenchange", function () {
+            if (document.fullscreenElement) {
+                examSecurityActive = true;
                 startTimer();
-            }else{
-                handleViolation("Anda keluar dari mode fullscreen!");
+                document.getElementById('table_data').style.removeProperty('display');
+                return;
             }
+
+            handleViolation("Anda keluar dari mode fullscreen!");
         });
 
-        // ✅ Deteksi pindah tab / minimize
-        document.addEventListener("visibilitychange", function() {
+        document.addEventListener("visibilitychange", function () {
             if (document.hidden) {
                 handleViolation("Anda meninggalkan halaman ujian!");
             }
@@ -523,21 +525,41 @@
             handleViolation("Anda beralih jendela dari ujian!");
         });
 
-        // 🔹 Fungsi untuk handle pelanggaran
         function handleViolation(message) {
-            if (!warningShown) {
-                warningShown = true;
-                alert(message + " Ini peringatan pertama. Jika terjadi lagi, ujian akan dihentikan.");
-                enableFullscreen(); // coba paksa balik fullscreen
-            } else {
-                alert(message + " Ujian dihentikan.");
-                // Redirect langsung ke route Laravel untuk finish ujian
-                window.location.href = '{{ route("peserta.finishUjianExitFullScreen", ["id_ujian" => "__id_ujian__", "__id_peserta_ujian__"]) }}'
-                    .replace('__id_ujian__', ujian_id)
-                    .replace('__id_peserta_ujian__', peserta_id);
+            if (!examSecurityActive || violationProcessing) {
+                return;
             }
+
+            violationProcessing = true;
+            alert(message + " Ujian dihentikan dan sisa waktu Anda disimpan.");
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = @json(route('peserta.finishUjianExitFullScreen', [
+                'id_ujian' => '__id_ujian__',
+                'id_peserta_ujian' => '__id_peserta_ujian__'
+            ]))
+                .replace('__id_ujian__', ujian_id)
+                .replace('__id_peserta_ujian__', peserta_id);
+
+            const fields = {
+                _token: @json(csrf_token()),
+                sisa_waktu: Math.max(0, parseInt(document.getElementById('sisaWaktu').value, 10) || 0)
+            };
+
+            Object.entries(fields).forEach(function ([name, value]) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
         }
 
+        window.handleExamViolation = handleViolation;
 
 
     });
@@ -673,23 +695,7 @@
     // });
 
     document.addEventListener('DOMContentLoaded', function () {
-
-        // Sembunyikan table_data di awal (jika belum disembunyikan via HTML/CSS)
         document.getElementById('table_data').style.display = 'none';
-
-        document.addEventListener("fullscreenchange", function () {
-            // alert(document.fullscreenElement);
-            if (!document.fullscreenElement) {
-                alert("Anda keluar dari fullscreen. Sistem akan logout sekarang.");
-
-                // Redirect langsung tanpa penundaan
-                window.location.href = '{{ route("peserta.finishUjianExitFullScreen", ["id_ujian" => "__id_ujian__", "__id_peserta_ujian__"]) }}'
-                    .replace('__id_ujian__', ujian_id)
-                    .replace('__id_peserta_ujian__', peserta_id);
-            } else{
-                document.getElementById('table_data').style.removeProperty('display');
-            }
-        });
     });
     
     // Mencegah reload manual dengan tombol refresh
@@ -704,19 +710,13 @@
 
         if (e.ctrlKey && e.key === "Tab") {
             e.preventDefault();
-            alert("Ctrl + Tab tidak diizinkan. Sistem akan logout.");
-            window.location.href = '{{ route("peserta.finishUjianExitFullScreen", ["id_ujian" => "__id_ujian__", "__id_peserta_ujian__"]) }}'
-                .replace('__id_ujian__', ujian_id)
-                .replace('__id_peserta_ujian__', peserta_id);
+            window.handleExamViolation?.("Ctrl + Tab tidak diizinkan selama ujian!");
         }
 
         // Cegah Alt+Tab (sayangnya tidak bisa full di browser modern)
         if (e.altKey && e.key === "Tab") {
             e.preventDefault();
-            alert("Alt + Tab tidak diizinkan. Sistem akan logout.");
-            window.location.href = '{{ route("peserta.finishUjianExitFullScreen", ["id_ujian" => "__id_ujian__", "__id_peserta_ujian__"]) }}'
-                .replace('__id_ujian__', ujian_id)
-                .replace('__id_peserta_ujian__', peserta_id);
+            window.handleExamViolation?.("Alt + Tab tidak diizinkan selama ujian!");
         }
 
         // Blokir Inspect Element
@@ -724,13 +724,13 @@
             (e.ctrlKey && e.key === "u") || 
             e.key === "F12") {
             e.preventDefault();
-            handleViolation("Akses inspeksi tidak diizinkan selama ujian!");
+            window.handleExamViolation?.("Akses inspeksi tidak diizinkan selama ujian!");
         }
     });
 
     document.addEventListener("contextmenu", function (e) {
         e.preventDefault(); // cegah menu klik kanan muncul
-        handleViolation("Klik kanan tidak diizinkan selama ujian!");
+        window.handleExamViolation?.("Klik kanan tidak diizinkan selama ujian!");
     });
 
 

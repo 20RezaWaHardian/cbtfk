@@ -593,14 +593,19 @@ class UjianController extends Controller
             if ($data->need_kuesioner == 1) {
                 return response()->json([
                     'message' => 'Silahkan Isi Kuesioner Terlebih Dahulu.',
-                    'redirect' => url('https://cbt-fkik.unja.ac.id/kuesioner/' . $pesertaId . '/participant/' . $ujianId . '/kuesionerku/' . $ujian->kuesioner_id)
+                    // 'redirect' => url('https://cbt-fkik.unja.ac.id/kuesioner/' . $pesertaId . '/participant/' . $ujianId . '/kuesionerku/' . $ujian->kuesioner_id)
+                    'redirect' => route('peserta.kuesioner', [
+                        'id_peserta_ujian' => $pesertaId,
+                        'id_ujian' => $ujianId,
+                        'id_kuesioner' => $ujian->kuesioner_id,
+                    ])
                 ]);
             } else {
                 if($ujian->id_jenis_ujian == 1)
                 {
                     return response()->json([
                         'message' => 'Anda Telah Menyelesaikan Ujian.',
-                        'redirect' => url('https://siakad-blok.unja.ac.id/riwayatujianmhs')
+                        'redirect' => route('dashboard')
                     ]);
                     // return redirect()->route('dashboard');
                 }else{
@@ -640,7 +645,11 @@ class UjianController extends Controller
 
 
         if ($data->need_kuesioner == 1) {
-            return redirect()->to('https://cbt-fkik.unja.ac.id/kuesioner/' . $pesertaId . '/participant/' . $ujianId . '/kuesionerku/' . $ujian->kuesioner_id);
+            return redirect()->route('peserta.kuesioner', [
+                'id_peserta_ujian' => $pesertaId,
+                'id_ujian' => $ujianId,
+                'id_kuesioner' => $ujian->kuesioner_id,
+            ]);
         } else {
             if($ujian->id_jenis_ujian == 1)
             {
@@ -651,29 +660,46 @@ class UjianController extends Controller
             // return redirect()->route('dashboard');
         }
     }
-    public function akhiriUjianExitFullScreen($id_ujian, $id_peserta_ujian)
+    public function akhiriUjianExitFullScreen(Request $request, $id_ujian, $id_peserta_ujian)
     {
-
+        $request->validate([
+            'sisa_waktu' => ['required', 'integer', 'min:0'],
+        ]);
 
         $ujianId = decrypt($id_ujian);
         $pesertaId = decrypt($id_peserta_ujian);
-        $ujian = Ujian::where('id_ujian',$ujianId)->first();
-        $pilganJawab = PilganJawab::where('peserta_ujian_id', $pesertaId)->sum('score');
-        $essayJawab = EssayJawab::where('peserta_ujian_id', $pesertaId)->sum('score');
-        $total_nilai = $pilganJawab + $essayJawab;
-        $update_finish_peserta = [
-            'status_pengerjaan' => 3,
-            'nilai' => $total_nilai,
-        ];
-        PesertaUjian::where('ujian_id', $ujianId)->where('id_peserta_ujian', $pesertaId)->update($update_finish_peserta);
-        LogAktifitas::catat("Ujian Dihentikan Karena Keluar Dari Mode Fullscreen");
+        $ujian = Ujian::findOrFail($ujianId);
+        $peserta = PesertaUjian::where('ujian_id', $ujianId)
+            ->where('id_peserta_ujian', $pesertaId)
+            ->firstOrFail();
 
-        if($ujian->id_jenis_ujian == 1)
-        {
-            return redirect()->route('dashboard');
-        }else{
-            return redirect()->route('dashboard');
+        if ($peserta->status_pengerjaan == 1) {
+            $totalNilai = PilganJawab::where('peserta_ujian_id', $pesertaId)->sum('score')
+                + EssayJawab::where('peserta_ujian_id', $pesertaId)->sum('score');
+
+            $peserta->update([
+                'waktu_berhenti' => now(),
+                'sisa_waktu' => $request->integer('sisa_waktu'),
+                'status_pengerjaan' => 3,
+                'nilai' => $totalNilai,
+            ]);
+
+            LogAktifitas::catat("Ujian Dihentikan Karena Keluar Dari Mode Fullscreen");
         }
+
+        // if ($data->need_kuesioner == 1) {
+        //     return redirect()->route('peserta.kuesioner', [
+        //         'id_peserta_ujian' => $pesertaId,
+        //         'id_ujian' => $ujianId,
+        //         'id_kuesioner' => $ujian->kuesioner_id,
+        //     ]);
+        // } else {
+            return redirect()->route('dashboard')
+            ->with('error', 'Ujian dihentikan karena Anda meninggalkan halaman ujian.');
+            // return redirect()->route('dashboard');
+        // }
+
+        
     }
 
     public function runPing(Request $request)

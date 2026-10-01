@@ -13,7 +13,7 @@ class ExportController extends Controller
     {
         $ujian = Ujian::where('id_ujian',$id_ujian)->first();
 
-        $peserta = PesertaUjian::with('mhs_pt')->where('ujian_id',$id_ujian)->get();
+        $peserta = PesertaUjian::with('mahasiswa')->where('ujian_id',$id_ujian)->get();
         $data = [
             'id_ujian' => $ujian->id_ujian,
             'nama_ujian' => $ujian->nama_ujian,

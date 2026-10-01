@@ -21,10 +21,10 @@
                     style="width:100px">
             </td>
             <td align="center" style="font-size: 14px;">
-                <H3 style="color:#eb5707">KEMENTERIAN AGAMA</H3>
-                <H3 style="color:#eb5707">UNIVERSITAS ISLAM NEGERI SULTAN THAHA SAIFUDDIN JAMBI</H3>
-                <H3 style="color:#eb5707">Fakultas Kedokteran</H3>
-                <p style="color:#065ec2">Jalan Lintas Jambi - Muaro Bulian KM. 16 Simpang Sungai Duren Kab. Muaro Jambi 36363</p>
+                <H3 style="color:#090401">KEMENTERIAN AGAMA</H3>
+                <H3 style="color:#090401">UNIVERSITAS ISLAM NEGERI SULTAN THAHA SAIFUDDIN JAMBI</H3>
+                <H3 style="color:#090401">FAKULTAS KEDOKTERAS</H3>
+                <p style="color:#090401">Jalan Lintas Jambi - Muaro Bulian KM. 16 Simpang Sungai Duren Kab. Muaro Jambi 36363</p>
 
 
             </td>

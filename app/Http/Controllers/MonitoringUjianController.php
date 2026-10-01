@@ -44,7 +44,7 @@ class MonitoringUjianController extends Controller
         try {
             $ujianId = decrypt($ujianId);
             $ujian = Ujian::findorfail($ujianId);
-            $peserta_ujian = PesertaUjian::with('mahasiswa_rombel','peserta_eksternal')->where('ujian_id', $ujian->id_ujian)
+            $peserta_ujian = PesertaUjian::with('peserta_eksternal')->where('ujian_id', $ujian->id_ujian)
                 ->select(
                     'id_peserta_ujian',
                     'ip_address',
@@ -53,7 +53,7 @@ class MonitoringUjianController extends Controller
                     'waktu_berhenti',
                     'sisa_waktu',
                     'id_mhs_pt',
-                    'mahasiswa_rombel_id',
+                    
                     'id_peserta_eksternal',
                     'ujian_id',
                     'nilai',
@@ -83,7 +83,7 @@ class MonitoringUjianController extends Controller
                     'waktu_berhenti',
                     'sisa_waktu',
                     'id_mhs_pt',
-                    'mahasiswa_rombel_id',
+                    
                     'ujian_id',
                     'nilai',
                     'nilai_akhir',
@@ -113,7 +113,7 @@ class MonitoringUjianController extends Controller
                     'waktu_berhenti',
                     'sisa_waktu',
                     'id_mhs_pt',
-                    'mahasiswa_rombel_id',
+                    
                     'ujian_id',
                     'nilai',
                     'nilai_akhir',
@@ -143,7 +143,7 @@ class MonitoringUjianController extends Controller
                     'waktu_berhenti',
                     'sisa_waktu',
                     'id_mhs_pt',
-                    'mahasiswa_rombel_id',
+                    
                     'ujian_id',
                     'nilai',
                     'nilai_akhir',
@@ -247,9 +247,8 @@ class MonitoringUjianController extends Controller
     public function downloadBeritaAcara($id_ujian)
     {
         $ujian = Ujian::findorfail(decrypt($id_ujian));
-        $peserta_ujian = PesertaUjian::with('mahasiswa_rombel')->where('ujian_id', $ujian->id_ujian)->get();
-        $peserta_ujian_ba = PesertaUjian::with('mahasiswa_rombel')
-            ->where('ujian_id', $ujian->id_ujian)
+        $peserta_ujian = PesertaUjian::where('ujian_id', $ujian->id_ujian)->get();
+        $peserta_ujian_ba = PesertaUjian::where('ujian_id', $ujian->id_ujian)
             ->where(function ($query) {
                 $query->where('kesamaan_foto', 1)
                     ->orWhere('alat_bantu', 1)

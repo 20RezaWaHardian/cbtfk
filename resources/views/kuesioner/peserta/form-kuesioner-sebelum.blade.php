@@ -69,6 +69,16 @@
             </button>
         </div>
     @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <!-- Form Start -->
     <form action="{{ route('peserta.kuesionerStoreSebelum',['id_peserta_ujian'=> $peserta->id_peserta_ujian,'id_ujian'=> $ujian->id_ujian,'id_kuesioner'=> $kuesioner->id_kuesioner]) }}" method="POST" id="kuesionerForm">
         @csrf
@@ -102,6 +112,8 @@
                                 @foreach ($aspek->pertanyaan as $pertanyaan)
                                     @php
                                         $cekjwb = $jawaban[$pertanyaan->id_pertanyaan_kuesioner] ?? null;
+                                        $jawabanPoint = old("pertanyaan.{$pertanyaan->id_pertanyaan_kuesioner}", $cekjwb?->jawaban);
+                                        $jawabanTeks = old("jawaban_terbuka.{$pertanyaan->id_pertanyaan_kuesioner}", $cekjwb?->jawaban_terbuka);
                                     @endphp
                                     <tr>
                                         <td>{{ $pertanyaan->pertanyaan }}</td>
@@ -111,13 +123,13 @@
                                                     <input type="radio" id="pertanyaan_{{ $pertanyaan->id_pertanyaan_kuesioner }}_{{ $i }}"
                                                     name="pertanyaan[{{ $pertanyaan->id_pertanyaan_kuesioner }}]" 
                                                     value="{{ $i }}"
-                                                    {{ ($cekjwb && $cekjwb->jawaban == $i) ? 'checked' : '' }}
+                                                     @checked((string) $jawabanPoint === (string) $i)
                                                 >
                                                 </td>
                                             @endfor
                                         @else
                                             <td>
-                                                <textarea cols="50" rows="5" name="jawaban_terbuka[{{ $pertanyaan->id_pertanyaan_kuesioner }}]"></textarea>
+                                                <textarea cols="50" rows="5" name="jawaban_terbuka[{{ $pertanyaan->id_pertanyaan_kuesioner }}]">{{ $jawabanTeks }}</textarea>
                                             </td>
                                         @endif
                                     </tr>
@@ -178,7 +190,7 @@
 </script>
 
 <script>
-    document.getElementById('submitBtn').addEventListener('click', function (event) {
+    document.getElementById('kuesionerForm').addEventListener('submit', function (event) {
     let isValid = true;
     let firstUnansweredRadio = null;
 
@@ -187,6 +199,11 @@
         // Loop melalui setiap baris pertanyaan dalam tabel
         table.querySelectorAll('tbody tr').forEach(function (row) {
             let radioButtons = row.querySelectorAll('input[type="radio"]'); // Semua radio button di dalam baris ini
+
+            if (radioButtons.length === 0) {
+                return;
+            }
+
             let name = radioButtons[0].getAttribute('name'); // Nama dari radio button (untuk grup pertanyaan)
 
             // Periksa apakah ada radio button yang dipilih dalam grup ini
@@ -220,7 +237,12 @@
         }
 
         event.preventDefault(); // Mencegah pengiriman form
+        return;
     }
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sedang memproses...';
 });
 
 </script>

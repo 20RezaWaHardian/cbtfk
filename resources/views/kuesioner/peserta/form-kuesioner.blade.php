@@ -51,6 +51,30 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Form Start -->
     <form action="{{ route('peserta.kuesionerStore',['id_peserta_ujian'=> $peserta->id_peserta_ujian,'id_ujian'=> $ujian->id_ujian,'id_kuesioner'=> $kuesioner->id_kuesioner]) }}" method="POST" id="kuesionerForm">
         @csrf
@@ -79,17 +103,22 @@
                             </thead>
                             <tbody>
                                 @foreach ($aspek->pertanyaan as $pertanyaan)
+                                    @php
+                                        $cekjwb = $jawaban[$pertanyaan->id_pertanyaan_kuesioner] ?? null;
+                                        $jawabanPoint = old("pertanyaan.{$pertanyaan->id_pertanyaan_kuesioner}", $cekjwb?->jawaban);
+                                        $jawabanTeks = old("jawaban_terbuka.{$pertanyaan->id_pertanyaan_kuesioner}", $cekjwb?->jawaban_terbuka);
+                                    @endphp
                                     <tr>
                                         <td>{{ $pertanyaan->pertanyaan }}</td>
                                         @if($pertanyaan->jenis_pertanyaan == 'point')
                                             @for ($i = 1; $i <= 4; $i++)
                                                 <td class="text-center">
-                                                    <input type="radio" id="pertanyaan_{{ $pertanyaan->id_pertanyaan_kuesioner }}_{{ $i }}" name="pertanyaan[{{ $pertanyaan->id_pertanyaan_kuesioner }}]" value="{{ $i }}">
+                                                    <input type="radio" id="pertanyaan_{{ $pertanyaan->id_pertanyaan_kuesioner }}_{{ $i }}" name="pertanyaan[{{ $pertanyaan->id_pertanyaan_kuesioner }}]" value="{{ $i }}" @checked((string) $jawabanPoint === (string) $i)>
                                                 </td>
                                             @endfor
                                         @else
                                             <td>
-                                                <textarea cols="50" rows="5" name="jawaban_terbuka[{{ $pertanyaan->id_pertanyaan_kuesioner }}]"></textarea>
+                                                <textarea cols="50" rows="5" name="jawaban_terbuka[{{ $pertanyaan->id_pertanyaan_kuesioner }}]">{{ $jawabanTeks }}</textarea>
                                             </td>
                                         @endif
                                     </tr>
@@ -120,7 +149,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-    document.getElementById('submitBtn').addEventListener('click', function (event) {
+    document.getElementById('kuesionerForm').addEventListener('submit', function (event) {
     let isValid = true;
     let firstUnansweredRadio = null;
 
@@ -129,6 +158,11 @@
         // Loop melalui setiap baris pertanyaan dalam tabel
         table.querySelectorAll('tbody tr').forEach(function (row) {
             let radioButtons = row.querySelectorAll('input[type="radio"]'); // Semua radio button di dalam baris ini
+
+            if (radioButtons.length === 0) {
+                return;
+            }
+
             let name = radioButtons[0].getAttribute('name'); // Nama dari radio button (untuk grup pertanyaan)
 
             // Periksa apakah ada radio button yang dipilih dalam grup ini
@@ -162,7 +196,12 @@
         }
 
         event.preventDefault(); // Mencegah pengiriman form
+        return;
     }
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sedang memproses...';
 });
 
 </script>

@@ -101,15 +101,21 @@ class LoadDataController extends Controller
 
     public function getPaketSoal()
     {
+        // $data = PaketSoal::where('id_jenis_ujian', 1)
+        //             ->where('is_active', 1)
+        //             ->whereHas('soal')
+        //             ->where('is_delete', 0)
+        //             ->get();
         $data = PaketSoal::where('id_jenis_ujian', 1)
-                    ->where('is_active', 1)
-                    ->whereHas('soal')
-                    ->where('is_delete', 0)
-                    ->get();
-        // $data = PaketSoal::where('id_jenis_ujian',1)
-        //         ->where('is_active', 1)
-        //         ->where('is_delete', 0)
-        //         ->get();
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->whereHas('soal')
+                ->whereDoesntHave('soal', function ($query) {
+                    $query->where('status_validasi', '!=', 1)
+                        ->orWhereNull('paket_has_soal.poin')
+                        ->orWhere('paket_has_soal.poin', '<=', 0);
+                })
+                ->get();
         return response()->json($data);
     }
 

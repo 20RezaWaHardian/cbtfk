@@ -181,7 +181,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-12 mt-2">
+                            {{-- <div class="col-12 mt-2">
                                 <label for="is_kuesioner" class="mb-2"><b>Apakah Peserta Wajib Isi Kuesioner Sebelum Ujian ?</b></label>
                                 <div class="form-group">
                                     <select name="is_kuesioner_sebelum" class="form-control" id="is_kuesioner_sebelum">
@@ -193,7 +193,7 @@
                                     <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
+                            </div> --}}
 
                             <!-- Select2 Kuesioner (Disembunyikan) -->
                             <div class="col-12 mt-2" id="select-kuesioner-container-sebelum" style="display: none;">

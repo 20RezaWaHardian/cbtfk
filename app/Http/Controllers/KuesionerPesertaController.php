@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use App\Helpers\LogAktifitas;
 use App\Models\JawabanKuesioner;
 use App\Models\PertanyaanKuesioner;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class KuesionerPesertaController extends Controller
 {
@@ -68,62 +70,100 @@ class KuesionerPesertaController extends Controller
             'teks'  => $request->jawaban_terbuka ?? [],
         ];
 
+        try {
+            DB::transaction(function () use ($allJawaban, $pesertaUjianId) {
+
+                foreach ($allJawaban['point'] as $pertanyaan_id => $nilai) {
+                    JawabanKuesioner::updateOrCreate(
+                        [
+                            'pertanyaan_kuesioner_id' => $pertanyaan_id,
+                            'peserta_ujian_id' => $pesertaUjianId,
+                        ],
+                        [
+                            'pil_jwb_kue_id' => $nilai,
+                            'jawaban' => $nilai,
+                            'jawaban_terbuka' => null,
+                        ]
+                    );
+                }
+
+                foreach ($allJawaban['teks'] as $pertanyaan_id => $nilai) {
+                    JawabanKuesioner::updateOrCreate(
+                        [
+                            'pertanyaan_kuesioner_id' => $pertanyaan_id,
+                            'peserta_ujian_id' => $pesertaUjianId,
+                        ],
+                        [
+                            'pil_jwb_kue_id' => null,
+                            'jawaban' => null,
+                            'jawaban_terbuka' => $nilai,
+                        ]
+                    );
+                }
+
+                $peserta = PesertaUjian::findOrFail($pesertaUjianId);
+
+                $peserta->isi_kuesioner = 1;
+                $peserta->save();
+            });
+
+            // Jika berhasil
+            return redirect()
+                ->route("dashboard")
+                ->with('success', 'Kuesioner berhasil disimpan.');
+
+        } catch (\Throwable $e) {
+
+            // Simpan error ke log Laravel
+            Log::error('Gagal menyimpan kuesioner', [
+                'peserta_ujian_id' => $pesertaUjianId,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Kuesioner gagal disimpan. Silakan coba lagi.');
+        }
+
         // foreach ($allJawaban['point'] as $pertanyaan_id => $nilai) {
-        //     JawabanKuesioner::create([
-        //         'pertanyaan_kuesioner_id' => $pertanyaan_id,
-        //         'pil_jwb_kue_id' => $nilai,
-        //         'jawaban' => $nilai, // khusus angka
-        //         'peserta_ujian_id' => $pesertaUjianId,
-        //         'jawaban_terbuka' => null,
-        //     ]);
+
+        //     JawabanKuesioner::updateOrCreate(
+        //         [
+        //             'pertanyaan_kuesioner_id' => $pertanyaan_id,
+        //             'peserta_ujian_id' => $pesertaUjianId,
+        //         ],
+        //         [
+        //             'pil_jwb_kue_id' => $nilai,
+        //             'jawaban' => $nilai,
+        //             'jawaban_terbuka' => null,
+        //         ]
+        //     );
         // }
 
         // foreach ($allJawaban['teks'] as $pertanyaan_id => $nilai) {
-        //     JawabanKuesioner::create([
-        //         'pertanyaan_kuesioner_id' => $pertanyaan_id,
-        //         'pil_jwb_kue_id' => null,
-        //         'jawaban' => null,
-        //         'peserta_ujian_id' => $pesertaUjianId,
-        //         'jawaban_terbuka' => $nilai, // khusus teks
-        //     ]);
+
+        //     JawabanKuesioner::updateOrCreate(
+        //         [
+        //             'pertanyaan_kuesioner_id' => $pertanyaan_id,
+        //             'peserta_ujian_id' => $pesertaUjianId,
+        //         ],
+        //         [
+        //             'pil_jwb_kue_id' => null,
+        //             'jawaban' => null,
+        //             'jawaban_terbuka' => $nilai,
+        //         ]
+        //     );
         // }
-
-        foreach ($allJawaban['point'] as $pertanyaan_id => $nilai) {
-
-            JawabanKuesioner::updateOrCreate(
-                [
-                    'pertanyaan_kuesioner_id' => $pertanyaan_id,
-                    'peserta_ujian_id' => $pesertaUjianId,
-                ],
-                [
-                    'pil_jwb_kue_id' => $nilai,
-                    'jawaban' => $nilai,
-                    'jawaban_terbuka' => null,
-                ]
-            );
-        }
-
-        foreach ($allJawaban['teks'] as $pertanyaan_id => $nilai) {
-
-            JawabanKuesioner::updateOrCreate(
-                [
-                    'pertanyaan_kuesioner_id' => $pertanyaan_id,
-                    'peserta_ujian_id' => $pesertaUjianId,
-                ],
-                [
-                    'pil_jwb_kue_id' => null,
-                    'jawaban' => null,
-                    'jawaban_terbuka' => $nilai,
-                ]
-            );
-        }
         
-        $peserta = PesertaUjian::findOrFail($pesertaUjianId);
-        $peserta->isi_kuesioner = 1;
-        $peserta->save();
-        LogAktifitas::catat("Telah Mengisi Kuesioner");
-        return redirect()->back()
-            ->with('success', 'Jawaban berhasil disimpan!');
+        // $peserta = PesertaUjian::findOrFail($pesertaUjianId);
+        // $peserta->isi_kuesioner = 1;
+        // $peserta->save();
+        // LogAktifitas::catat("Telah Mengisi Kuesioner");
+        // return redirect()->back()
+        //     ->with('success', 'Jawaban berhasil disimpan!');
     }
 
     public function kuesionerKu($pesertaUjianId, $ujianId, $kuesionerId)
@@ -132,11 +172,14 @@ class KuesionerPesertaController extends Controller
         $kuesioner = Kuesioner::findOrFail($kuesionerId);
         $ujian = Ujian::findOrFail($ujianId);
         $peserta = PesertaUjian::findorfail($pesertaUjianId);
+        $jawaban = JawabanKuesioner::where('peserta_ujian_id', $peserta->id_peserta_ujian)
+            ->get()
+            ->keyBy('pertanyaan_kuesioner_id');
 
 
         if ($kuesioner && $ujian && $peserta) {
             LogAktifitas::catat("Masuk Ke Halaman Kuesioner");
-            return view('kuesioner.peserta.form-kuesioner', compact('kuesioner', 'ujian', 'peserta'));
+            return view('kuesioner.peserta.form-kuesioner', compact('kuesioner', 'ujian', 'peserta', 'jawaban'));
         } else {
             LogAktifitas::catat("Gagal Menemukan Kuesioner");
             return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk  Mengisi Kuesioner!');
@@ -158,31 +201,62 @@ class KuesionerPesertaController extends Controller
             'teks'  => $request->jawaban_terbuka ?? [],
         ];
 
-        foreach ($allJawaban['point'] as $pertanyaan_id => $nilai) {
-            JawabanKuesioner::create([
-                'pertanyaan_kuesioner_id' => $pertanyaan_id,
-                'pil_jwb_kue_id' => $nilai,
-                'jawaban' => $nilai, // khusus angka
-                'peserta_ujian_id' => $pesertaUjianId,
-                'jawaban_terbuka' => null,
-            ]);
-        }
+        try {
+            DB::transaction(function () use ($allJawaban, $pesertaUjianId) {
 
-        foreach ($allJawaban['teks'] as $pertanyaan_id => $nilai) {
-            JawabanKuesioner::create([
-                'pertanyaan_kuesioner_id' => $pertanyaan_id,
-                'pil_jwb_kue_id' => null,
-                'jawaban' => null,
+                foreach ($allJawaban['point'] as $pertanyaan_id => $nilai) {
+                    JawabanKuesioner::updateOrCreate(
+                        [
+                            'pertanyaan_kuesioner_id' => $pertanyaan_id,
+                            'peserta_ujian_id' => $pesertaUjianId,
+                        ],
+                        [
+                            'pil_jwb_kue_id' => $nilai,
+                            'jawaban' => $nilai,
+                            'jawaban_terbuka' => null,
+                        ]
+                    );
+                }
+
+                foreach ($allJawaban['teks'] as $pertanyaan_id => $nilai) {
+                    JawabanKuesioner::updateOrCreate(
+                        [
+                            'pertanyaan_kuesioner_id' => $pertanyaan_id,
+                            'peserta_ujian_id' => $pesertaUjianId,
+                        ],
+                        [
+                            'pil_jwb_kue_id' => null,
+                            'jawaban' => null,
+                            'jawaban_terbuka' => $nilai,
+                        ]
+                    );
+                }
+
+                $peserta = PesertaUjian::findOrFail($pesertaUjianId);
+
+                $peserta->isi_kuesioner = 1;
+                $peserta->save();
+            });
+
+            // Jika berhasil
+            return redirect()
+                ->route("dashboard")
+                ->with('success', 'Kuesioner berhasil disimpan.');
+
+        } catch (\Throwable $e) {
+
+            // Simpan detail teknis ke log, jangan tampilkan ke peserta.
+            Log::error('Gagal menyimpan kuesioner', [
                 'peserta_ujian_id' => $pesertaUjianId,
-                'jawaban_terbuka' => $nilai, // khusus teks
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Kuesioner gagal disimpan. Silakan coba lagi atau hubungi admin.');
         }
-        
-        $peserta = PesertaUjian::findOrFail($pesertaUjianId);
-        $peserta->isi_kuesioner = 1;
-        $peserta->save();
-        LogAktifitas::catat("Telah Mengisi Kuesioner");
-        return redirect()->to('https://siakad-blok.unja.ac.id/riwayatujianmhs')
-            ->with('success', 'Jawaban berhasil disimpan!');
     }
 }

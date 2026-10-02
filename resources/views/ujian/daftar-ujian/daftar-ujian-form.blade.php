@@ -553,11 +553,11 @@
                 method: 'GET',
                 success: function(response) {
                     console.log(response);
-                    if (response.length === 0) {
-                        alert("Prodi yang dipilih belum memiliki paket soal ujian, silahkan buat paket soal ujian terlebih dahulu.");
-                        $('#paket_soal').prop('disabled', true);
-                        return;
-                    }
+                    // if (response.length === 0) {
+                    //     alert("Prodi yang dipilih belum memiliki paket soal ujian, silahkan buat paket soal ujian terlebih dahulu.");
+                    //     $('#paket_soal').prop('disabled', true);
+                    //     return;
+                    // }
                     var options = '<option disabled selected>Pilih Paket Soal</option>';
                     $.each(response, function(index, item) {
                         options += '<option value="' + item.id_paket_soal  + '">' + item.judul + '</option>';

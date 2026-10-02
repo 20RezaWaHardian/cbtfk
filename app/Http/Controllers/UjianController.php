@@ -57,13 +57,13 @@ class UjianController extends Controller
                 if($ujian->id_jenis_ujian == 1)
                 {
 
-                    // return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
+                    // return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
                     return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
                 }else{
                     return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
                 }
             }
-
+            
             $ujian = Ujian::findorfail($ujianId);
             $paket_soal = PaketSoal::where('id_paket_soal', $ujian->paket_soal_id)->first();
             // dd($peserta->json_soal_mhs);
@@ -75,10 +75,10 @@ class UjianController extends Controller
                     ->inRandomOrder()
                     ->select('soal.*','b.paket_soal_id')
                     ->get();
-                
+                // dd($paket_has_soal);
                 $json_sistem = json_encode($paket_has_soal, JSON_PRETTY_PRINT);
                 // dd($json_sistem);
-                $namaFile = 'soal_'.$peserta->no_mhs.'_' . time() . '.json';
+                $namaFile = 'soal_'.$peserta->nim.'_' . time() . '.json';
 
                 $cekFileJson = PesertaUjian::select('json_soal_mhs')
                     ->findOrFail($pesertaId);
@@ -219,7 +219,7 @@ class UjianController extends Controller
 
         $peserta = PesertaUjian::find($request->peserta_ujian_id);
         // if ($peserta->status_pengerjaan != 1) {
-        //     return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
+        //     return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
         // }
         
         $ujian = Ujian::where('id_ujian', $peserta->ujian_id)->first();
@@ -227,7 +227,7 @@ class UjianController extends Controller
             if($ujian->id_jenis_ujian == 1)
             {
 
-                return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
+                return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
             }else{
                 return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
             }
@@ -356,7 +356,7 @@ class UjianController extends Controller
         // $peserta = PesertaUjian::find(decrypt($request->peserta_ujian_id));
         $peserta = PesertaUjian::with('ujian')->findOrFail(decrypt($request->peserta_ujian_id));
         if ($peserta->status_pengerjaan != 1) {
-            return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
+            return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
         }
         // try {
 
@@ -491,7 +491,7 @@ class UjianController extends Controller
 
         $peserta = PesertaUjian::find(decrypt($request->peserta_ujian_id));
         if ($peserta->status_pengerjaan != 1) {
-            return redirect()->to('https://siakad-blok.unja.ac.id/home')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
+            return redirect()->route('dashboard')->with('error', 'Ups Silahkan Hubungi Admin Untuk Membuka Akses Anda!');
         }
         try {
             # Create or update EssayJawab

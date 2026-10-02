@@ -89,7 +89,10 @@ class LoadDataController extends Controller
         // $data = SBKelompokBelajar::with('jenis_blok')->where('id_blok', $idBlok)->whereIN('id_jenis_blok', [21, 22, 23, 24, 25, 26, 27, 28])->get();
         if($idProdi != "eksternal")
         {
-            $data = PaketSoal::where('prodi_id', $idProdi)->where('is_active', 1)->get();
+             $data = PaketSoal::where('id_jenis_ujian', '!=', 1)
+                    ->where('is_active', 1)
+                    ->whereHas('soal')
+                    ->get();
         }else{
             $data = PaketSoal::where('id_jenis_ujian','!=',1)->where('is_active', 1)->get();
         }
@@ -98,10 +101,15 @@ class LoadDataController extends Controller
 
     public function getPaketSoal()
     {
-        $data = PaketSoal::where('id_jenis_ujian',1)
-                ->where('is_active', 1)
-                ->where('is_delete', 0)
-                ->get();
+        $data = PaketSoal::where('id_jenis_ujian', 1)
+                    ->where('is_active', 1)
+                    ->whereHas('soal')
+                    ->where('is_delete', 0)
+                    ->get();
+        // $data = PaketSoal::where('id_jenis_ujian',1)
+        //         ->where('is_active', 1)
+        //         ->where('is_delete', 0)
+        //         ->get();
         return response()->json($data);
     }
 

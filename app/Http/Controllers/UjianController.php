@@ -593,7 +593,6 @@ class UjianController extends Controller
             if ($data->need_kuesioner == 1) {
                 return response()->json([
                     'message' => 'Silahkan Isi Kuesioner Terlebih Dahulu.',
-                    // 'redirect' => url('https://cbt-fkik.unja.ac.id/kuesioner/' . $pesertaId . '/participant/' . $ujianId . '/kuesionerku/' . $ujian->kuesioner_id)
                     'redirect' => route('peserta.kuesioner', [
                         'id_peserta_ujian' => $pesertaId,
                         'id_ujian' => $ujianId,
@@ -706,7 +705,7 @@ class UjianController extends Controller
     {
         $id_peserta = $request->input('peserta_id');
         $pesertaId = decrypt($id_peserta);
-        $host = 'https://cbt-fkik.unja.ac.id/';
+        $host = 'https://cbt.sistem-blok-uin.my.id/';
 
 
         if (stripos(PHP_OS, 'WIN') === 0) {

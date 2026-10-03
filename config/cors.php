@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ["https://cbt-fkik.test","https://cbt-fkik.unja.ac.id"],
+    'allowed_origins' => ["https://cbt.test","https://cbt.sistem-blok-uin.my.id/"],
 
     'allowed_origins_patterns' => [],
 

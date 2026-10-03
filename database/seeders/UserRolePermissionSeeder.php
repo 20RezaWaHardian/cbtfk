@@ -28,19 +28,19 @@ class UserRolePermissionSeeder extends Seeder
             $developer = User::create(array_merge([
                 'id_asal' => 6645,
                 'username' => 20220018,
-                'email' => 'repaldi@unja.ac.id',
+                'email' => 'reza@gmail.com',
             ], $default_user_value));
 
 
             $admin = User::create(array_merge([
                 'username' => 'admin',
-                'email' => 'admin@unja.ac.id',
+                'email' => 'admin@gmail.com',
             ], $default_user_value));
 
 
             $user = User::create(array_merge([
                 'username' => 'user',
-                'email' => 'user@unja.ac.id',
+                'email' => 'user@gmail.com',
             ], $default_user_value));
 
 

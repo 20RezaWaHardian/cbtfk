@@ -816,7 +816,7 @@
                 // alert(errorMessage);
                 alert("Ujian Telah Selesai atau Berhenti"+errorMessage);
                 setTimeout(() => {
-                    window.location.href = "https://siakad-blok.unja.ac.id/home";
+                    window.location.href = "{{ route('dashboard') }}";
                 }, 1000); --}}
             }
         });

@@ -25,9 +25,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user && $user->can('read dashboard')) {
-            // if (auth()->user()->hasRole('mahasiswa')) {
-            //     return redirect()->route('keycloak.logout')->with('error', 'Silahkan akses aplikasi CBT melalui <a href="https://siakad-blok.unja.ac.id/">Siakad Blok</a>.');
-            // }
+            
             $ujian = Ujian::count();
             $soal = Soal::count();
             $paket_soal = PaketSoal::where('is_delete',0)->count();

@@ -158,47 +158,31 @@ class DaftarUjianController extends Controller
     public function update($id, UjianRequest $request)
     {
         $this->authorize('update ujian/daftar-ujian');
-
         try {
-            $data = [
-                'id_jenis_ujian' => $request->input('id_jenis_ujian'),
-                'nama_ujian' => $request->input('nama_ujian'),
-                'prodi_id' => $request->input('prodi_id'),
-                'blok_id' => $request->input('blok_id'),
-                'kelompok_belajar_id' => $request->input('kelompok_belajar_id'),
-                'kategori_ujian_id' => $request->input('kategori_ujian_id'),
-                'paket_soal_id' => $request->input('paket_soal_id'),
-                'tanggal_ujian' => $request->input('tanggal_ujian'),
-                'selesai_ujian' => $request->input('selesai_ujian'),
-                'ketentuan_ujian' => $request->input('ketentuan_ujian'),
-                'tampil_nilai' => $request->input('tampil_nilai'),
-                'status' => $request->input('status'),
-                'is_kuesioner' => $request->input('is_kuesioner'),
-                'kuesioner_id' => $request->input('kuesioner_id'),
-            ];
-
             $ujian = Ujian::findOrFail($id);
-            $data['id_room'] = $ujian->id_room;
-            $data['room_name'] = $ujian->room_name;
-            $data['semester_id'] = $ujian->semester_id;
-            $data['pembuat_ujian_id'] = $ujian->pembuat_ujian_id;
-            if ($ujian) {
 
-                $ujian->update($data);
-                if ($ujian && $request->has('pengawas_ujian')) {
-                    $ujian->pengawas()->sync($request->pengawas_ujian);
-                }
-                LogAktifitas::catat("Memperbaruhi Ujian Dengan Nama " . $ujian->nama_ujian . " (id)" . $ujian->id_ujian . ".");
-            } else {
-                return redirect()->back()->with('error', 'Id Ujian tidak ditemukan.');
+            $data = $request->except([
+                'files',
+                'pengawas_ujian',
+                'kelompok_belajar_id',
+                'id_room',
+                'room_name',
+                'semester_id',
+                'pembuat_ujian_id',
+            ]);
+
+            $ujian->update($data);
+            if ($request->has('pengawas_ujian')) {
+                $ujian->pengawas()->sync($request->pengawas_ujian);
             }
+            LogAktifitas::catat("Memperbaruhi Ujian Dengan Nama " . $ujian->nama_ujian . " (id)" . $ujian->id_ujian . ".");
 
             return redirect()->route('ujian.daftar-ujian.index')
                 ->with('success', 'Ujian berhasil diperbarui.');
         } catch (ModelNotFoundException $e) {
             return redirect()->back()->with('error', 'ID Ujian Tidak Ditemukan!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui ujian: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui ujian, silahkan hubungi pengelola ');
         }
     }
 

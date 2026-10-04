@@ -52,65 +52,21 @@ class DaftarUjianKuesionerDataTable extends DataTable
     {
         $kuesionerId = decrypt($this->id_kuesioner);
         if (auth()->user()->hasAnyRole(['developer', 'admin'])) {
-            return $model->withCount('peserta_ujian as peserta')->where('status', 2)->whereNotNull('kuesioner_sebelum_id');
+            return $model->where('kuesioner_id', $kuesionerId)->withCount('peserta_ujian as peserta')->where('status', 2);
         }elseif (auth()->user()->hasAnyRole(['koordinator-blok'])) {
             $idPegawaiLogin = auth()->user()->pegawai->pegawai_siakad_id;
             $semester = DB::table('siakad.semester')->where('periode_aktif', 1)->first();
 
-            $blokIds = DB::table('siakad_blok.koordinator_blok')
-                ->where('id_semester', $semester->id_semester)
-                ->where('id_pegawai_koor', $idPegawaiLogin)
-                ->orWhere('id_pegawai_ass', $idPegawaiLogin)
-                ->pluck('id_kelas');
-            // dd($blokIds);
-            // ambil pegawai lain baik dari kolom koor atau ass
-            $pegawaiLain = DB::table('siakad_blok.koordinator_blok')
-                ->whereIn('id_kelas', $blokIds)
-                ->where('id_semester', $semester->id_semester)
-                ->where(function ($query) use ($idPegawaiLogin) {
-                    $query->where('id_pegawai_koor', '!=', $idPegawaiLogin)
-                        ->orWhere('id_pegawai_ass', '!=', $idPegawaiLogin);
-                })
-                ->selectRaw('id_pegawai_koor as id_pegawai')
-                ->union(
-                    DB::table('siakad_blok.koordinator_blok')
-                        ->where('id_semester', $semester->id_semester)
-                        ->whereIn('id_kelas', $blokIds)
-                        ->where(function ($query) use ($idPegawaiLogin) {
-                            $query->where('id_pegawai_koor', '!=', $idPegawaiLogin)
-                                ->orWhere('id_pegawai_ass', '!=', $idPegawaiLogin);
-                        })
-                        ->selectRaw('id_pegawai_ass as id_pegawai')
-                )
-                ->distinct()
-                ->pluck('id_pegawai');
-            // dd($pegawaiLain)
-            $pegawaiLain = $pegawaiLain->reject(function ($id) use ($idPegawaiLogin) {
-                return $id == $idPegawaiLogin; // buang yg sama dengan id login
-            })->values();
-            // dd();
-            $pegawai = DB::table('kepeg.pegawai')->where('pegawai_siakad_id', $pegawaiLain->first())->first();
-            // dd(auth()->user()->pegawai->id_pegawai);
-            $id_blok = DB::table('siakad.kelas as a')
-                ->join('siakad.matakuliah as b','b.id_matakuliah','a.id_matakuliah')
-                ->join('siakad_blok.koordinator_blok as c','c.id_kelas','a.id_kelas')
-                ->where('a.id_semester',$semester->id_semester)
-                ->whereIn('a.id_kelas',$blokIds)
-                ->groupBy('b.id_blok')
-                ->pluck('b.id_blok')->toArray();
-            // dd($id_blok);
+            $co_blok = DB::table('sistembl_siakad-uin.pengelola_blok as a')
+                    ->join('sistembl_siakad-uin.dosen as b','a.dosen_id','b.id_dosen')
+                    ->where('a.id_dosen', auth()->user()->dosen->id_dosen)
+                    ->pluck('a.id_kelas')->toArray();
 
-            return $model
-            // ->whereHas('pengawas', function ($q) use ($pegawai) {
-            //     $q->whereIn('ujian_has_pengawas.id_pegawai', [$pegawai->id_pegawai, auth()->user()->pegawai->id_pegawai]);
-            // })
-            ->whereIn('blok_id',$id_blok)
-            ->whereNotNull('kuesioner_sebelum_id')
-            ->withCount('peserta_ujian as peserta')->whereIn('status', [0, 1]);
+            return $model->where('kuesioner_id', $kuesionerId)
+            ->whereIn('blok_id',$co_blok)
+            ->withCount('peserta_ujian as peserta')->whereIn('status', [2]);
         } else {
-            return $model->withCount('peserta_ujian as peserta')
-                ->whereNotNull('kuesioner_sebelum_id')
-                ->where('pembuat_ujian_id', auth()->user()->id_asal);
+            return $model ->where('status', 2)->where('kuesioner_id', $kuesionerId)->withCount('peserta_ujian as peserta')->where('pembuat_ujian_id', auth()->user()->id_asal);
         }
     }
 

@@ -1,0 +1,4 @@
+jangan buat unit test, testing akan saya lakukan manual
+saya akan beri tau kendalanya ketika testing saya gagal
+ketika migrate pastikan tidak mengubah data atau table yang sudah ada
+kalaupun mengubah pastikan itu adalah fitur yang baru dan konfirmasi terlebih dahulu untuk menjalankannya. pada project ini tidak boleh migrate jadi kalau ada perlu table baru berikan strukturnya saja biar saya bantu buatkan manual,  jangan pernah jalankan migrate:fresh atau command lain yang menyebabkan table terhapus atau data terhapus, jika ada penyesuaian struktur table pastikan tidak menghapus data atau table lain, jika memang memerlukan migrate yang menghapus data atau table konfirmasi terlebih dahulu

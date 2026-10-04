@@ -116,7 +116,49 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $p->pertanyaan }}</td>
-                                                <td>Jawaban Terbuka</td>
+                                                <td>
+                                                    @php
+                                                        $daftarJawaban = $jawabanTerbuka->get(
+                                                            $p->id_pertanyaan_kuesioner,
+                                                            collect()
+                                                        );
+                                                    @endphp
+
+                                                    <button class="btn btn-sm btn-primary" type="button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modal-jawaban-{{ $p->id_pertanyaan_kuesioner }}"
+                                                        @disabled($daftarJawaban->isEmpty())>
+                                                        Lihat Jawaban
+                                                    </button>
+
+                                                    <div class="modal fade"
+                                                        id="modal-jawaban-{{ $p->id_pertanyaan_kuesioner }}"
+                                                        tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title">Jawaban Peserta</h5>
+                                                                    <button type="button" class="btn-close"
+                                                                        data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <p class="fw-bold">{{ $p->pertanyaan }}</p>
+                                                                    <ol class="mb-0 ps-3">
+                                                                        @foreach ($daftarJawaban as $jawaban)
+                                                                            <li class="mb-3">
+                                                                                {{ $jawaban->jawaban_terbuka }}
+                                                                            </li>
+                                                                        @endforeach
+                                                                    </ol>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary"
+                                                                        data-bs-dismiss="modal">Tutup</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
                                                 <td>{{ $totalJawaban }}</td>
                                                 <td>{{ $persentaseUmum }}%</td>
                                             </tr>

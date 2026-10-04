@@ -43,8 +43,10 @@ class PesertaUjianController extends Controller
                                 ->select(
                                     'b.id_mahasiswa as id_mhs_pt',
                                     'b.nama as nama_mahasiswa',
-                                    'b.nim as no_mhs'
+                                    'b.nim as no_mhs',
+                                    'a.blok_id as blok_id',
                                 )
+                                ->whereNull('a.deleted_at')
                                 ->get();
             }else if($ujian->id_jenis_ujian == 2){
                 $daftar_mahasiswa = collect();

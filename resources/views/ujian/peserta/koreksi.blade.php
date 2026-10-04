@@ -10,7 +10,7 @@
         <div class="card-body px-4 py-3">
             <div class="row align-items-center">
                 <div class="col-12">
-                    <h4 class="fw-semibold mb-8">{{$peserta_ujian->mhs_pt ? $peserta_ujian->mhs_pt->mahasiswa->nama_mahasiswa : $peserta_ujian->peserta_eksternal->nama_peserta}}</h4>
+                    <h4 class="fw-semibold mb-8">{{$peserta_ujian->mahasiswa ? $peserta_ujian->mahasiswa->nama : $peserta_ujian->peserta_eksternal->nama_peserta}}</h4>
                     <p>{{ $peserta_ujian->ujian->nama_ujian }} </p>
                 </div>
             </div>

@@ -136,11 +136,16 @@ class PaketSoalController extends Controller
 
         $kategori_soal = KategoriSoal::get();
         $soal = [];
+        $poinSudahDivalidasi = false;
         if ($paket_soal) {
             $soal = $paket_soal->soal()->with('soal_pilgan')->get();
+            $poinSudahDivalidasi = $soal->isNotEmpty()
+                && $soal->every(function ($item) {
+                    return !is_null($item->pivot->poin);
+                });
         }
         // dd($soal);
-        return view('bank-soal.paket-soal.show-soal', compact('paket_soal', 'soal', 'kategori_soal'));
+        return view('bank-soal.paket-soal.show-soal', compact('paket_soal', 'soal', 'kategori_soal', 'poinSudahDivalidasi'));
     }
 
     //Validasi Poin

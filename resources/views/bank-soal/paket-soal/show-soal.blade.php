@@ -24,7 +24,7 @@
         <div style="float:left">
             <a href="{{ route('bank-soal.paket-soal.index') }}" class="btn btn-sm btn-secondary mb-2"> Kembali</a>
             @if(count($paket_soal->soal) > 0)
-                <a href="{{ route('bank-soal.paket-soal.validasiPoin',$paket_soal->id_paket_soal) }}" class="btn btn-sm btn-warning mb-2"> Validasi Poin</a>
+                <a href="{{ route('bank-soal.paket-soal.validasiPoin',$paket_soal->id_paket_soal) }}" class="btn btn-sm {{ $poinSudahDivalidasi ? 'btn-primary' : 'btn-warning' }} mb-2"> Validasi Poin</a>
             @endif
         </div>
         @if (count($soal) >= 1)

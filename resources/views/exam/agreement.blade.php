@@ -29,7 +29,20 @@
                         <li> 3. Tidak diperkenankan keluar dari <b>aplikasi</b> jika ujian belum diselesaikan.</li>
                         <li> 4. Tidak diperkenankan membuka tab baru.</li>
                         <li> 5.<b>Jika keluar dari sistem, Jawaban akan tersimpan, dan ujian tidak bisa diulangi</b> </li>
-                      </ul>
+                    </ul>
+                    @php
+                        $ketentuanUjian = trim(html_entity_decode(
+                            strip_tags($ujian->ketentuan_ujian ?? ''),
+                            ENT_QUOTES | ENT_HTML5,
+                            'UTF-8'
+                        ));
+                    @endphp
+                    @if ($ketentuanUjian !== '')
+                        <div class="mt-3">
+                            <p class="fw-semibold mb-2">Ketentuan Ujian:</p>
+                            <div class="border rounded p-3">{{ $ketentuanUjian }}</div>
+                        </div>
+                    @endif
                     <div class="form-check mt-2">
                         <input class="form-check-input" type="checkbox" id="agreementCheckbox">
                         <label class="form-check-label" for="agreementCheckbox">

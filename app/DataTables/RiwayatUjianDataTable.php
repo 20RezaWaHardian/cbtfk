@@ -43,20 +43,17 @@ class RiwayatUjianDataTable extends DataTable
 
             })
             ->addColumn('pangawas_ujian_oke', function ($row) {
-                if($row->pengawas->isNotEmpty())
-                {
+                if ($row->pengawas->isNotEmpty()) {
                     $p = '<ol>';
-                        foreach ($row->pengawas as $value) {
-                            $p .= '<li>'.MyHelpers::nama_gelarById($value->id_pegawai).'</li>';
-                        }
-                        
+                    foreach ($row->pengawas as $value) {
+                        $p .= '<li>' . MyHelpers::nama_gelarById($value->id_dosen) . '</li>';
+                    }
+
                     $p .= '</ol>';
                     return $p;
-
-                }else{
+                } else {
                     return '<span class="badge text-bg-danger">Belum Ada Pengawas</span>';
                 }
-                
             })
             ->editColumn('action', function ($row) {
                 $action = '';

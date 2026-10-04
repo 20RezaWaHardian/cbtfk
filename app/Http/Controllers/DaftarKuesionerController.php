@@ -53,9 +53,33 @@ class DaftarKuesionerController extends Controller
 
 
         // semua pilihan jawaban
+        // $pil_jwb = DB::table('pilihan_jwb_kue')
+        //     ->select('id_pilihan_jwb_kue', 'nama_pilihan')
+        //     ->get();
         $pil_jwb = DB::table('pilihan_jwb_kue')
-            ->select('id_pilihan_jwb_kue', 'nama_pilihan')
-            ->get();
+                    ->select('id_pilihan_jwb_kue', 'nama_pilihan')
+                    ->orderBy('id_pilihan_jwb_kue')
+                    ->get();
+        if ($pil_jwb->isEmpty()) {
+            $pil_jwb = collect([
+                (object) [
+                    'id_pilihan_jwb_kue' => 1,
+                    'nama_pilihan' => '1',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 2,
+                    'nama_pilihan' => '2',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 3,
+                    'nama_pilihan' => '3',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 4,
+                    'nama_pilihan' => '4',
+                ],
+            ]);
+        }
 
 
         // ambil rekap langsung dari SQL
@@ -103,12 +127,27 @@ class DaftarKuesionerController extends Controller
             $rekapMap[$r->pertanyaan_kuesioner_id][$r->pil_jwb_kue_id] = $r->total;
         }
 
+        $jawabanTerbuka = JawabanKuesioner::query()
+            ->select('pertanyaan_kuesioner_id', 'jawaban_terbuka')
+            ->whereHas('pesertaUjian.ujian', function ($q) use ($ujian) {
+                $q->where('id_ujian', $ujian->id_ujian)
+                    ->where('kuesioner_id', $ujian->kuesioner_id);
+            })
+            ->whereHas('pertanyaan.kategoriKue', function ($q) use ($ujian) {
+                $q->where('kuesioner_id', $ujian->kuesioner_id);
+            })
+            ->whereNotNull('jawaban_terbuka')
+            ->where('jawaban_terbuka', '<>', '')
+            ->orderBy('id_jawaban_kuesioner')
+            ->get()
+            ->groupBy('pertanyaan_kuesioner_id');
         return view('kuesioner.daftar-kue.detail', compact(
             'kue',
             'total_responden',
             'pil_jwb',
             'rekapMap',
-            'totalPerPertanyaan'
+            'totalPerPertanyaan',
+            'jawabanTerbuka'
         ));
     }
 
@@ -135,9 +174,33 @@ class DaftarKuesionerController extends Controller
 
 
         // semua pilihan jawaban
+        // $pil_jwb = DB::table('pilihan_jwb_kue')
+        //     ->select('id_pilihan_jwb_kue', 'nama_pilihan')
+        //     ->get();
         $pil_jwb = DB::table('pilihan_jwb_kue')
-            ->select('id_pilihan_jwb_kue', 'nama_pilihan')
-            ->get();
+                    ->select('id_pilihan_jwb_kue', 'nama_pilihan')
+                    ->orderBy('id_pilihan_jwb_kue')
+                    ->get();
+        if ($pil_jwb->isEmpty()) {
+            $pil_jwb = collect([
+                (object) [
+                    'id_pilihan_jwb_kue' => 1,
+                    'nama_pilihan' => '1',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 2,
+                    'nama_pilihan' => '2',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 3,
+                    'nama_pilihan' => '3',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 4,
+                    'nama_pilihan' => '4',
+                ],
+            ]);
+        }
 
 
         // ambil rekap langsung dari SQL
@@ -185,12 +248,27 @@ class DaftarKuesionerController extends Controller
             $rekapMap[$r->pertanyaan_kuesioner_id][$r->pil_jwb_kue_id] = $r->total;
         }
 
+        $jawabanTerbuka = JawabanKuesioner::query()
+            ->select('pertanyaan_kuesioner_id', 'jawaban_terbuka')
+            ->whereHas('pesertaUjian.ujian', function ($q) use ($ujian) {
+                $q->where('id_ujian', $ujian->id_ujian)
+                    ->where('kuesioner_sebelum_id', $ujian->kuesioner_sebelum_id);
+            })
+            ->whereHas('pertanyaan.kategoriKue', function ($q) use ($ujian) {
+                $q->where('kuesioner_id', $ujian->kuesioner_sebelum_id);
+            })
+            ->whereNotNull('jawaban_terbuka')
+            ->where('jawaban_terbuka', '<>', '')
+            ->orderBy('id_jawaban_kuesioner')
+            ->get()
+            ->groupBy('pertanyaan_kuesioner_id');
         return view('kuesioner.daftar-kue.detail', compact(
             'kue',
             'total_responden',
             'pil_jwb',
             'rekapMap',
-            'totalPerPertanyaan'
+            'totalPerPertanyaan',
+            'jawabanTerbuka'
         ));
     }
 
@@ -209,7 +287,31 @@ class DaftarKuesionerController extends Controller
             ->distinct('peserta_ujian_id')
             ->count('peserta_ujian_id');
 
-        $pil_jwb = DB::table('pilihan_jwb_kue as a')->get();
+        // $pil_jwb = DB::table('pilihan_jwb_kue as a')->get();
+        $pil_jwb = DB::table('pilihan_jwb_kue')
+                    ->select('id_pilihan_jwb_kue', 'nama_pilihan')
+                    ->orderBy('id_pilihan_jwb_kue')
+                    ->get();
+        if ($pil_jwb->isEmpty()) {
+            $pil_jwb = collect([
+                (object) [
+                    'id_pilihan_jwb_kue' => 1,
+                    'nama_pilihan' => '1',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 2,
+                    'nama_pilihan' => '2',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 3,
+                    'nama_pilihan' => '3',
+                ],
+                (object) [
+                    'id_pilihan_jwb_kue' => 4,
+                    'nama_pilihan' => '4',
+                ],
+            ]);
+        }
 
         $jwb_kue = JawabanKuesioner::select(
             'id_jawaban_kuesioner',

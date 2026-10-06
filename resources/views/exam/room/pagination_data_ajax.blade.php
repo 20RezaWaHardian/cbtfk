@@ -51,7 +51,7 @@
                                             checked
                                         @endif
                                         >
-                                        {{$pilgan->kode}}. {{$pilgan->teks}}
+                                        {{$pilgan->kode }}. {!! $pilgan->teks !!} <br>
                                     </label><br>
                                         <input type="hidden" class="soal_id" value="{{ encrypt($paket_has_soal->soal_id )}}">
                                         <input type="hidden" id="pilgan_id_{{$paket_has_soal->soal_id}}_{{$index}}" value="{{ encrypt($pilgan->id_pilgan) }}">

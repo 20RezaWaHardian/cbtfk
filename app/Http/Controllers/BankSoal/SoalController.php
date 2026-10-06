@@ -531,6 +531,7 @@ class SoalController extends Controller
                 'pertanyaan' => $request->input('pertanyaan'),
                 'kunci' => $request->input('kunci'),
                 'sub_kategori_soal_id' => $request->input('sub_kategori_soal_id'),
+                'id_pelaku' => auth()->user()->id
             ]);
 
             $kode = $request->input('kode');
@@ -578,6 +579,7 @@ class SoalController extends Controller
                 'pertanyaan' => $request->input('pertanyaan'),
                 'kunci' => $request->input('kunci'),
                 'sub_kategori_soal_id' => $request->input('sub_kategori_soal_id'),
+                'id_pelaku' => auth()->user()->id
             ]);
 
             $existingOptions = Pilgan::where('soal_id', $soal->id_soal)->get();

@@ -61,6 +61,7 @@ class AuthController extends Controller
 
         Auth::guard('web')->login($user, false);
         $request->session()->regenerate();
+
         $request->session()->forget(['kamuflase', 'impersonator_id', 'impersonator_userlogin']);
         $request->session()->put('userlogin', [
             'username' => $user->username,

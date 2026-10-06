@@ -97,14 +97,14 @@ class DaftarSoalDataTable extends DataTable
                 });
         }else{
             return $query->where(function ($query) {
-                    if (auth()->user()->id_asal !== null) {
-                        $query->where('created_by', auth()->user()->id_asal)
-                            ->orWhere(function ($fallback) {
-                                $fallback->whereNull('created_by')->where('id_pelaku', auth()->user()->id);
-                            });
-                    } else {
+                    // if (auth()->user()->id_asal !== null) {
+                    //     $query->where('created_by', auth()->user()->id_asal)
+                    //         ->orWhere(function ($fallback) {
+                    //             $fallback->whereNull('created_by')->where('id_pelaku', auth()->user()->id);
+                    //         });
+                    // } else {
                         $query->whereNull('created_by')->where('id_pelaku', auth()->user()->id);
-                    }
+                    // }
                 })
                 ->when(request('kategori_soal'), function ($query) {
                     $query->whereHas('sub_kategori_soal', function ($q) {

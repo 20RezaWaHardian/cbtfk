@@ -70,8 +70,18 @@ class UjianSayaDataTable extends DataTable
                             // $status = '<a href="' . route('peserta.faceRegister', ['id_ujian' => encrypt($row->ujian_id), 'id_peserta_ujian' => encrypt($row->id_peserta_ujian)]) . '" class="btn btn-info btn-sm masukRoom mb-2">Mulai Ujian</a> <br/>';
                         }
                     }elseif($row->status_pengerjaan == 1 && $row->ujian->status == 1){
-                        $status = '<a href="' . route('peserta.faceRegister', ['id_ujian' => encrypt($row->ujian_id), 'id_peserta_ujian' => encrypt($row->id_peserta_ujian)]) . '" class="btn btn-info btn-sm masukRoom mb-2">Lanjutkan Ujian</a> <br/>';
-
+                        // $status = '<a href="' . route('peserta.faceRegister', ['id_ujian' => encrypt($row->ujian_id), 'id_peserta_ujian' => encrypt($row->id_peserta_ujian)]) . '" class="btn btn-info btn-sm masukRoom mb-2">Lanjutkan Ujian</a> <br/>';
+                        // Hanya IP yang memulai ujian boleh melanjutkan ujian.
+                        if (empty($row->ip_address) || hash_equals((string) $row->ip_address, (string) request()->ip())) {
+                            $status = '<a href="' . route('peserta.faceRegister', [
+                                'id_ujian' => encrypt($row->ujian_id),
+                                'id_peserta_ujian' => encrypt($row->id_peserta_ujian),
+                            ]) . '" class="btn btn-info btn-sm masukRoom mb-2">Lanjutkan Ujian</a> <br/>';
+                        } else {
+                            $status = '<span class="badge text-bg-danger mb-2">'
+                                . 'Ujian sedang aktif pada perangkat atau jaringan lain'
+                                . '</span><br/>';
+                        }
                     }elseif($row->status_pengerjaan == 2){
                         $status = '<span class="badge text-bg-success mb-2">Anda sudah mengerjakan</span> <br/>';
                     }

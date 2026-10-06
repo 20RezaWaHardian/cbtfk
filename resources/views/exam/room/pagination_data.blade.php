@@ -39,7 +39,7 @@
                                             checked
                                         @endif
                                         >
-                                        {{$pilgan->kode}}. {{$pilgan->teks}} <br>
+                                        {{$pilgan->kode }}. {!! $pilgan->teks !!} <br>
                                         <input type="hidden" class="soal_id" value="{{ $item->id_soal }}">
                                         <input type="hidden" id="pilgan_id_{{$item->id}}_{{$index}}" value="{{ $pilgan->id_pilgan }}">
                                         <input type="hidden" id="paket_soal_id" value="{{$paket_soal_id}}">

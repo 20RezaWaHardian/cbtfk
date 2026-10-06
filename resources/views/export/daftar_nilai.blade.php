@@ -17,13 +17,13 @@
     <table width="100%">
         <tr>
             <td width="10%">
-                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('/assets/images/logos/logouin.png'))) }}"
+                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('/assets/images/logos/logo_uin.png'))) }}"
                     style="width:100px">
             </td>
             <td align="center" style="font-size: 14px;">
                 <H3 style="color:#090401">KEMENTERIAN AGAMA</H3>
                 <H3 style="color:#090401">UNIVERSITAS ISLAM NEGERI SULTAN THAHA SAIFUDDIN JAMBI</H3>
-                <H3 style="color:#090401">FAKULTAS KEDOKTERAS</H3>
+                <H3 style="color:#090401">FAKULTAS KEDOKTERAN</H3>
                 <p style="color:#090401">Jalan Lintas Jambi - Muaro Bulian KM. 16 Simpang Sungai Duren Kab. Muaro Jambi 36363</p>
 
 

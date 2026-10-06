@@ -28,8 +28,8 @@
             @foreach($peserta_ujian as $index => $peserta)
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td>{{ $peserta->mhs_pt->no_mhs ?? '-' }}</td>
-                <td>{{ $peserta->mhs_pt->mahasiswa->nama_mahasiswa ?? '-' }}</td>
+                <td>{{ $peserta->mahasiswa->nim ?? '-' }}</td>
+                <td>{{ $peserta->mahasiswa->nama ?? '-' }}</td>
                 @if(isset($peserta->mulai_ujian))
                     <td>{{ $peserta->kehadiran == 0 ? 'Hadir' : 'Tidak Hadir' }}</td>
                 @else
@@ -62,8 +62,8 @@
             @foreach($peserta_ujian_ba as $index => $peserta)
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td>{{ $peserta->mhs_pt->no_mhs ?? '-' }}</td>
-                <td>{{ $peserta->mhs_pt->mahasiswa->nama_mahasiswa ?? '-' }}</td>
+                <td>{{ $peserta->mahasiswa->nim ?? '-' }}</td>
+                <td>{{ $peserta->mahasiswa->nama ?? '-' }}</td>
                 <td>{{ $peserta->kesamaan_foto == 0 ? 'Tidak' : 'Ya' }}</td>
                 <td>{{ $peserta->alat_bantu == 0 ? 'Tidak' : 'Ya' }}</td>
                 <td>{{ $peserta->menyontek == 0 ? 'Tidak' : 'Ya' }}</td>

@@ -115,7 +115,7 @@ class RiwayatUjianController extends Controller
     public function exportAnalisisSoalPdf($id_ujian)
     {
         $data = $this->getAnalisisSoalData($id_ujian);
-        $logoPath = public_path('assets/images/logos/logo_unja.png');
+        $logoPath = public_path('assets/images/logos/logo_uin.png');
         $data['logoBase64'] = file_exists($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
         $fileName = 'analisis-soal-' . str_replace(' ', '-', strtolower($data['jadwal']->nama_ujian ?? 'ujian')) . '.pdf';
 

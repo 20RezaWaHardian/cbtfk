@@ -286,7 +286,7 @@
                 <div class="d-flex align-items-center justify-content-between gap-3">
                     <a href="{{ url('/') }}" class="d-inline-flex align-items-center gap-2 text-decoration-none">
                         <span class="brand-badge">
-                            <img src="{{ asset('assets/images/logos/logouin.png') }}" alt="Logo UIN" class="brand-logo">
+                            <img src="{{ asset('assets/images/logos/logo_uin.png') }}" alt="Logo UIN" class="brand-logo" style="width: 100%; height: auto; object-fit: contain;">
                         </span>
                         <span>
                             <span class="brand-font fw-bold d-block text-dark lh-1">CBT FK</span>

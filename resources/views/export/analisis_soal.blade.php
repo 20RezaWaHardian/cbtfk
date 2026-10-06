@@ -42,15 +42,14 @@
         <tr>
             <td width="10%">
                 @if(!empty($logoBase64))
-                    <img src="{{ $logoBase64 }}" style="width:90px">
+                    <img src="{{ $logoBase64 }}" style="width:100px">
                 @endif
             </td>
             <td align="center" style="font-size: 13px;">
-                <h3 style="color:#eb5707; margin: 0;">KEMENTERIAN PENDIDIKAN TINGGI, SAINS DAN TEKNOLOGI</h3>
-                <h3 style="color:#eb5707; margin: 0;">UIN STS Jambi</h3>
-                <h3 style="color:#eb5707; margin: 0;">Fakultas Kedokteran dan Ilmu Kesehatan</h3>
-                <p style="color:#065ec2; margin: 4px 0;">Kampus Pinang Masak, Jl. Raya Jambi - Muara Bulian KM. 15, Mendalo Indah, Jambi.
-                    Kode Pos 36361 Telp. (0741) 583377, 583111</p>
+                <H3 style="color:#090401">KEMENTERIAN AGAMA</H3>
+                <H3 style="color:#090401">UNIVERSITAS ISLAM NEGERI SULTAN THAHA SAIFUDDIN JAMBI</H3>
+                <H3 style="color:#090401">FAKULTAS KEDOKTERAN</H3>
+                <p style="color:#090401">Jalan Lintas Jambi - Muaro Bulian KM. 16 Simpang Sungai Duren Kab. Muaro Jambi 36363</p>
             </td>
         </tr>
         <tr>

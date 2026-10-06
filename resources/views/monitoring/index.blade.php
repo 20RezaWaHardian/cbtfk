@@ -71,9 +71,9 @@
                 <li class="nav-item" role="presentation">
                     <a class="nav-link active" id="data-participants-tab" data-bs-toggle="tab" href="#data-participants" role="tab" aria-controls="data-participants" aria-selected="true">Data Peserta</a>
                 </li>
-                <li class="nav-item" role="presentation">
+                {{-- <li class="nav-item" role="presentation">
                     <a class="nav-link" id="monitor-camera-tab" data-bs-toggle="tab" href="#monitor-camera" role="tab" aria-controls="monitor-camera" aria-selected="true">Monitor Kamera</a>
-                </li>
+                </li> --}}
             </ul>
 
             <div class="tab-content" id="monitorTabsContent">
@@ -89,7 +89,7 @@
                                             <th>Nama Peserta</th>
                                             <th>IP Address</th>
                                             <th>Status Peserta</th>
-                                            <th>Status Perangkat</th>
+                                            {{-- <th>Status Perangkat</th> --}}
                                             <th>Aksi</th>
 
                                         </tr>
@@ -120,9 +120,9 @@
                                                         <span class="badge bg-warning">Status Tidak Diketahui</span>
                                                     @endif
                                                 </td>
-                                                <td id="camera-status-{{ $peserta->mahasiswa->nama ??  $peserta->peserta_eksternal->nama_peserta}}"> <!-- Placeholder for camera status -->
+                                                {{-- <td id="camera-status-{{ $peserta->mahasiswa->nama ??  $peserta->peserta_eksternal->nama_peserta}}"> <!-- Placeholder for camera status -->
                                                     <span class="badge bg-secondary">Offline</span>
-                                                </td>
+                                                </td> --}}
                                                 <td>
                                                     <a href="{{ route('monitoring.logAktivitas', $peserta->id_peserta_ujian) }}" data-toggle="tooltip" title="Log Aktivitas" class="btn btn-sm btn-secondary">
                                                         <i class="fa fa-repeat" aria-hidden="true"></i>

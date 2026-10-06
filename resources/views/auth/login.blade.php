@@ -289,7 +289,7 @@
                     <div class="col-lg-7">
                         <section class="brand-panel">
                             <a href="{{ url('/') }}" class="logo-wrap" aria-label="Kembali ke beranda CBT FK">
-                                <img src="{{ asset('assets/images/logos/logouin.png') }}" alt="Logo UIN">
+                                <img src="{{ asset('assets/images/logos/logo_uin.png') }}" alt="Logo UIN" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
                             </a>
                             <h1 class="brand-title brand-font">Masuk ke sistem ujian digital CBT FK.</h1>
                             <p class="brand-copy mb-0">
@@ -307,7 +307,7 @@
                         <section class="login-card">
                             <div class="login-card-header">
                                 <a href="{{ url('/') }}" class="login-mini-logo mb-3" aria-label="CBT FK">
-                                    <img src="{{ asset('assets/images/logos/logouin.png') }}" alt="Logo UIN">
+                                    <img src="{{ asset('assets/images/logos/logo_uin.png') }}" alt="Logo UIN" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
                                 </a>
                                 <h3 class="brand-font fw-bold mb-1">Selamat Datang</h3>
                                 <p class="text-muted mb-0">Silakan masukkan username dan password Anda.</p>

@@ -35,12 +35,12 @@
                 <tbody>
                     <tr>
                         <th>NAMA</th>
-                        <td>{{ $peserta->mhs_pt->mahasiswa->nama_mahasiswa }}</td>
+                        <td>{{ $peserta->mahasiswa->nama }}</td>
                     </tr>
 
                     <tr>
                         <th>NIM</th>
-                        <td>{{ $peserta->mhs_pt->no_mhs }}</td>
+                        <td>{{ $peserta->mahasiswa->nim }}</td>
                     </tr>
 
                     <tr>

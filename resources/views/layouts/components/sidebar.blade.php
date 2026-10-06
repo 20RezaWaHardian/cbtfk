@@ -2,7 +2,7 @@
     <div class="brand-logo d-flex align-items-center justify-content-between">
         <a href="{{ url('/') }}" class="app-brand text-decoration-none">
             <span class="app-brand-logo">
-                <img src="{{ asset('assets/images/logos/logouin.png') }}" alt="Logo UIN">
+                <img src="{{ asset('assets/images/logos/logo_uin.png') }}" alt="Logo UIN" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" >
             </span>
             <span class="app-brand-text">
                 <strong>CBT FK</strong>

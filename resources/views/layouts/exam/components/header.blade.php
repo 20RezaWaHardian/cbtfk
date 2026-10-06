@@ -2,7 +2,7 @@
     <ul class="navbar-nav">
         <li class="nav-item nav-item-cbt">
             <div class="exam-brand">
-                <img src="{{ asset('assets/images/logos/logouin.png') }}" width="100" height="50" alt="Logo UIN" class="exam-logo">
+                <img src="{{ asset('assets/images/logos/logo_uin.png') }}" width="100" height="50" alt="Logo UIN" class="exam-logo">
                 <small class="exam-brand-label">CBT FK</small>
             </div>
         </li>

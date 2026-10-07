@@ -184,6 +184,62 @@ class MonitoringUjianController extends Controller
         }
     }
 
+
+    /**
+     * Mengirim sisa waktu terbaru untuk tabel monitoring tanpa mengubah data DB.
+     */
+    public function remainingTimes($ujianId)
+    {
+        $ujian = Ujian::with('paket_soal')->findOrFail(decrypt($ujianId));
+
+        // Durasi paket tersimpan sebagai format waktu (HH:MM:SS).
+        $durationParts = array_map('intval', explode(':', (string) optional($ujian->paket_soal)->durasi));
+        $durationParts = array_pad($durationParts, 3, 0);
+        $durationInSeconds = ($durationParts[0] * 3600) + ($durationParts[1] * 60) + $durationParts[2];
+        $serverNow = Carbon::now();
+
+        // Query ini hanya membaca kolom yang dibutuhkan timer monitoring.
+        $participants = PesertaUjian::where('ujian_id', $ujian->id_ujian)
+            ->get([
+                'id_peserta_ujian',
+                'status_pengerjaan',
+                'mulai_ujian',
+                'sisa_waktu',
+                'updated_at',
+            ])
+            ->map(function ($participant) use ($durationInSeconds, $serverNow) {
+                $remainingSeconds = null;
+
+                if ($participant->status_pengerjaan === 1) {
+                    if (!is_null($participant->sisa_waktu)) {
+                        // Kurangi waktu sejak sinkronisasi terakhir agar nilai DB lama tidak menaikkan timer.
+                        $elapsedSinceSync = Carbon::parse($participant->updated_at)->diffInSeconds($serverNow);
+                        $remainingSeconds = max(0, (int) $participant->sisa_waktu - $elapsedSinceSync);
+                    } elseif ($participant->mulai_ujian) {
+                        // Peserta baru memakai rumus sama dengan room: waktu mulai ditambah durasi paket.
+                        $finishAt = Carbon::parse($participant->mulai_ujian)->addSeconds($durationInSeconds);
+                        $remainingSeconds = max(0, $serverNow->diffInSeconds($finishAt, false));
+                    }
+                } elseif ($participant->status_pengerjaan === 3) {
+                    // Saat dihentikan, sisa waktu tidak berjalan sampai peserta dilanjutkan.
+                    $remainingSeconds = max(0, (int) $participant->sisa_waktu);
+                } elseif ($participant->status_pengerjaan === 2) {
+                    $remainingSeconds = 0;
+                }
+
+                return [
+                    'id_peserta_ujian' => $participant->id_peserta_ujian,
+                    'status_pengerjaan' => $participant->status_pengerjaan,
+                    'remaining_seconds' => $remainingSeconds,
+                ];
+            });
+
+        return response()->json([
+            'server_time' => $serverNow->timestamp,
+            'participants' => $participants,
+        ]);
+    }
+
     public function logAktivitas($id_peserta_ujian)
     {
         $peserta = PesertaUjian::findorfail($id_peserta_ujian);

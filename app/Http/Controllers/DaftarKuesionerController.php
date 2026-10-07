@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\JawabanKuesionerPesertaExport;
 use App\Models\JawabanKuesioner;
 use App\Models\Kuesioner;
+use App\Models\PesertaUjian;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
 use Spatie\LaravelPdf\Facades\Pdf;
 use App\DataTables\DaftarUjianKuesionerDataTable;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DaftarKuesionerController extends Controller
 {
@@ -143,12 +146,55 @@ class DaftarKuesionerController extends Controller
             ->groupBy('pertanyaan_kuesioner_id');
         return view('kuesioner.daftar-kue.detail', compact(
             'kue',
+            'id_ujian',
             'total_responden',
             'pil_jwb',
             'rekapMap',
             'totalPerPertanyaan',
             'jawabanTerbuka'
         ));
+    }
+
+    public function exportJawabanPeserta($id_ujian)
+    {
+        $ujianId = decrypt($id_ujian);
+        $ujian = DB::table('ujian')->where('id_ujian', $ujianId)->first();
+        $kue = Kuesioner::with([
+            'kategori_kuesioner' => fn ($query) => $query->orderBy('id_kategori_kuesioner'),
+            'kategori_kuesioner.pertanyaan' => fn ($query) => $query->orderBy('id_pertanyaan_kuesioner'),
+        ])->where('id_kuesioner', $ujian->kuesioner_id)->firstOrFail();
+
+        // Kolom pertanyaan mengikuti urutan kategori dan pertanyaan pada kuesioner.
+        $pertanyaan = $kue->kategori_kuesioner->flatMap->pertanyaan->values();
+        $pertanyaanIds = $pertanyaan->pluck('id_pertanyaan_kuesioner');
+
+        // Hanya peserta ujian ini yang telah memiliki jawaban kuesioner.
+        $pesertaIds = JawabanKuesioner::query()
+            ->whereIn('pertanyaan_kuesioner_id', $pertanyaanIds)
+            ->whereHas('pesertaUjian', fn ($query) => $query->where('ujian_id', $ujianId))
+            ->distinct()
+            ->pluck('peserta_ujian_id');
+
+        $peserta = PesertaUjian::with(['mahasiswa', 'peserta_eksternal'])
+            ->where('ujian_id', $ujianId)
+            ->whereIn('id_peserta_ujian', $pesertaIds)
+            ->orderBy('id_peserta_ujian')
+            ->get();
+
+        // Satu query jawaban, lalu kelompokkan untuk mencegah query per peserta/kolom.
+        $jawaban = JawabanKuesioner::query()
+            ->whereIn('peserta_ujian_id', $peserta->pluck('id_peserta_ujian'))
+            ->whereIn('pertanyaan_kuesioner_id', $pertanyaanIds)
+            ->get()
+            ->groupBy('peserta_ujian_id')
+            ->map(fn ($items) => $items->keyBy('pertanyaan_kuesioner_id'));
+
+        $namaFile = 'jawaban-kuesioner-' . str($kue->judul_kuesioner)->slug() . '.xlsx';
+
+        return Excel::download(
+            new JawabanKuesionerPesertaExport($kue->kategori_kuesioner, $pertanyaan, $peserta, $jawaban),
+            $namaFile
+        );
     }
 
     public function detailKueSebelum($id_ujian)
@@ -275,15 +321,19 @@ class DaftarKuesionerController extends Controller
 
     public function downloadKuesioner($id_kuesioner)
     {
-        $kue = Kuesioner::with('kategori_kuesioner')
-            ->where('id_kuesioner', decrypt($id_kuesioner))
-            ->first();
+        $kuesionerId = decrypt($id_kuesioner);
+        $kue = Kuesioner::with([
+            'kategori_kuesioner' => fn ($query) => $query->orderBy('id_kategori_kuesioner'),
+            'kategori_kuesioner.pertanyaan' => fn ($query) => $query->orderBy('id_pertanyaan_kuesioner'),
+        ])->where('id_kuesioner', $kuesionerId)->firstOrFail();
+
+        $pertanyaanIds = $kue->kategori_kuesioner
+            ->flatMap->pertanyaan
+            ->pluck('id_pertanyaan_kuesioner');
 
         // total responden unik yang isi kuesioner ini
-        $total_responden = JawabanKuesioner::with('pertanyaan.kategoriKue')
-            ->whereHas('pertanyaan.kategoriKue', function ($q) use ($id_kuesioner) {
-                $q->where('kuesioner_id', decrypt($id_kuesioner));
-            })
+        $total_responden = JawabanKuesioner::query()
+            ->whereIn('pertanyaan_kuesioner_id', $pertanyaanIds)
             ->distinct('peserta_ujian_id')
             ->count('peserta_ujian_id');
 
@@ -313,19 +363,34 @@ class DaftarKuesionerController extends Controller
             ]);
         }
 
-        $jwb_kue = JawabanKuesioner::select(
-            'id_jawaban_kuesioner',
-            'peserta_ujian_id',
-            'pertanyaan_kuesioner_id',
-            'pil_jwb_kue_id',
-            'jawaban'
-        )->get();
+        // Agregasi di DB agar seluruh baris jawaban tidak dimuat ke memori PHP.
+        $rekapJawaban = JawabanKuesioner::query()
+            ->select(
+                'pertanyaan_kuesioner_id',
+                'pil_jwb_kue_id',
+                DB::raw('COUNT(*) as total')
+            )
+            ->whereIn('pertanyaan_kuesioner_id', $pertanyaanIds)
+            ->groupBy('pertanyaan_kuesioner_id', 'pil_jwb_kue_id')
+            ->get();
+
+        $rekapMap = [];
+        foreach ($rekapJawaban as $rekap) {
+            $rekapMap[$rekap->pertanyaan_kuesioner_id][$rekap->pil_jwb_kue_id] = $rekap->total;
+        }
+
+        $totalPerPertanyaan = JawabanKuesioner::query()
+            ->select('pertanyaan_kuesioner_id', DB::raw('COUNT(*) as total'))
+            ->whereIn('pertanyaan_kuesioner_id', $pertanyaanIds)
+            ->groupBy('pertanyaan_kuesioner_id')
+            ->pluck('total', 'pertanyaan_kuesioner_id');
         
         $html = view('kuesioner.daftar-kue.download', compact(
             'kue',
             'total_responden',
-            'jwb_kue',
-            'pil_jwb'
+            'pil_jwb',
+            'rekapMap',
+            'totalPerPertanyaan'
         ))->render();
 
         $mpdf = new \Mpdf\Mpdf([

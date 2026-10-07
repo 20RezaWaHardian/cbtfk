@@ -410,6 +410,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::controller(MonitoringUjianController::class)->prefix('monitoring')->name('monitoring.')->group(function () {
             Route::get('/ujian/{id_ujian}', 'index')->name('index');
+            // Endpoint read-only untuk sinkronisasi timer pada halaman monitoring.
+            Route::get('/ujian/{id_ujian}/remaining-times', 'remainingTimes')->name('remainingTimes');
             Route::get('/mulai-ujian/{id_ujian}', 'mulaiPesertAll')->name('mulaiPesertAll');
         });
     });
@@ -465,6 +467,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('/', 'index')->name('daftar-kuesioner');
             Route::get('/{id_kuesioner}','daftarUjian')->name('daftar-ujian');
             Route::get('/{id_ujian}/detail', 'detail')->name('detail-kuesioner');
+            Route::get('/{id_ujian}/detail/export-excel', 'exportJawabanPeserta')->name('export-jawaban-kuesioner');
             Route::get('/{id_ujian}/detail/sebelum', 'detailKueSebelum')->name('detailKueSebelum');
             Route::get('/download-kuesioner/{id_kuesioner}', 'downloadKuesioner')->name('downloadKuesioner');
         });

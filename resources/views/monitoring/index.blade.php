@@ -89,6 +89,8 @@
                                             <th>Nama Peserta</th>
                                             <th>IP Address</th>
                                             <th>Status Peserta</th>
+                                            {{-- Timer mengikuti sisa waktu yang disimpan oleh exam room. --}}
+                                            <th>Sisa Waktu</th>
                                             {{-- <th>Status Perangkat</th> --}}
                                             <th>Aksi</th>
 
@@ -119,6 +121,22 @@
                                                     @else
                                                         <span class="badge bg-warning">Status Tidak Diketahui</span>
                                                     @endif
+                                                </td>
+                                                {{-- Nilai awal ditampilkan sesuai status lalu disinkronkan lewat endpoint monitoring. --}}
+                                                <td>
+                                                    <span
+                                                        id="remaining-time-{{ $peserta->id_peserta_ujian }}"
+                                                        class="remaining-time fw-semibold"
+                                                        data-participant-id="{{ $peserta->id_peserta_ujian }}"
+                                                    >
+                                                        @if ($peserta->status_pengerjaan === 0)
+                                                            Belum Dimulai
+                                                        @elseif ($peserta->status_pengerjaan === 2)
+                                                            Selesai
+                                                        @else
+                                                            Memuat...
+                                                        @endif
+                                                    </span>
                                                 </td>
                                                 {{-- <td id="camera-status-{{ $peserta->mahasiswa->nama ??  $peserta->peserta_eksternal->nama_peserta}}"> <!-- Placeholder for camera status -->
                                                     <span class="badge bg-secondary">Offline</span>
@@ -333,5 +351,88 @@
         function reloadPage() {
             location.reload();
         }
+    </script>
+    <script>
+        // Menyimpan deadline lokal setiap peserta agar tampilan bergerak setiap detik.
+        const monitoringTimers = new Map();
+        const remainingTimesUrl = @json(route('ujian.monitoring.remainingTimes', encrypt($ujian->id_ujian)));
+
+        // Mengubah jumlah detik menjadi format HH:MM:SS.
+        function formatRemainingTime(totalSeconds) {
+            const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+            const hours = Math.floor(safeSeconds / 3600);
+            const minutes = Math.floor((safeSeconds % 3600) / 60);
+            const seconds = safeSeconds % 60;
+
+            return [hours, minutes, seconds]
+                .map(value => String(value).padStart(2, '0'))
+                .join(':');
+        }
+
+        // Menggambar timer dari deadline hasil sinkronisasi server.
+        function renderMonitoringTimers() {
+            const browserNow = Date.now();
+
+            monitoringTimers.forEach((timer, participantId) => {
+                const element = document.getElementById(`remaining-time-${participantId}`);
+                if (!element) return;
+
+                if (timer.status === 0) {
+                    element.textContent = 'Belum Dimulai';
+                    element.className = 'remaining-time fw-semibold text-secondary';
+                    return;
+                }
+
+                if (timer.status === 2) {
+                    element.textContent = 'Selesai';
+                    element.className = 'remaining-time fw-semibold text-success';
+                    return;
+                }
+
+                const remainingSeconds = timer.status === 3
+                    ? timer.remainingSeconds
+                    : Math.max(0, Math.ceil((timer.deadline - browserNow) / 1000));
+
+                element.textContent = formatRemainingTime(remainingSeconds);
+                element.className = remainingSeconds <= 300
+                    ? 'remaining-time fw-semibold text-danger'
+                    : 'remaining-time fw-semibold text-primary';
+            });
+        }
+
+        // Mengambil koreksi timer dan status terbaru tanpa memuat ulang halaman.
+        async function syncMonitoringTimers() {
+            try {
+                const response = await fetch(remainingTimesUrl, {
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const payload = await response.json();
+                const browserNow = Date.now();
+
+                payload.participants.forEach(participant => {
+                    const remainingSeconds = participant.remaining_seconds ?? 0;
+
+                    monitoringTimers.set(participant.id_peserta_ujian, {
+                        status: participant.status_pengerjaan,
+                        remainingSeconds: remainingSeconds,
+                        deadline: browserNow + (remainingSeconds * 1000)
+                    });
+                });
+
+                renderMonitoringTimers();
+            } catch (error) {
+                // Timer lokal tetap berjalan bila satu proses sinkronisasi gagal.
+                console.error('Gagal menyinkronkan sisa waktu monitoring:', error);
+            }
+        }
+
+        // Render lokal per detik; sinkronisasi server tiap 20 detik agar beban server lebih ringan.
+        syncMonitoringTimers();
+        setInterval(renderMonitoringTimers, 1000);
+        setInterval(syncMonitoringTimers, 20000);
     </script>
 @endpush

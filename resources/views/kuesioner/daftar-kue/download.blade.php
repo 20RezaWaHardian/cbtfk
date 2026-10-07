@@ -20,9 +20,6 @@
         tr {
             page-break-inside: avoid;
         }
-        tbody {
-            page-break-inside: avoid;
-        }
     </style>
 </head>
 <body>
@@ -51,11 +48,7 @@
                 @foreach ($item->pertanyaan as $p)
                     @php
                         $rowspan = count($pil_jwb);
-                        $jawabanPertanyaan = $jwb_kue->where('pertanyaan_kuesioner_id', $p->id_pertanyaan_kuesioner);
-                        $totalJawaban = $jawabanPertanyaan->count();
-
-                        // Total responden unik (semua peserta kuesioner)
-                        $totalResponden = $jwb_kue->pluck('peserta_ujian_id')->unique()->count();
+                        $totalJawaban = $totalPerPertanyaan[$p->id_pertanyaan_kuesioner] ?? 0;
                     @endphp
 
                     {{-- Kalau jenis pertanyaan point --}}
@@ -64,9 +57,7 @@
                     @if($p->jenis_pertanyaan == 'point')
                         @foreach ($pil_jwb as $pj)
                             @php
-                                $jumlah = $jawabanPertanyaan
-                                            ->where('pil_jwb_kue_id', $pj->id_pilihan_jwb_kue)
-                                            ->count();
+                                $jumlah = $rekapMap[$p->id_pertanyaan_kuesioner][$pj->id_pilihan_jwb_kue] ?? 0;
 
                                 // Rumus: jumlah pilihan ÷ total jawaban pertanyaan
                                 $persentase = $totalJawaban > 0
@@ -89,8 +80,8 @@
                     @else
                         @php
                             // Rumus: jumlah yang isi ÷ total responden
-                            $persentaseUmum = $totalResponden > 0
-                                ? number_format(($totalJawaban / $totalResponden) * 100, 0)
+                            $persentaseUmum = $total_responden > 0
+                                ? number_format(($totalJawaban / $total_responden) * 100, 0)
                                 : 0;
                         @endphp
 

@@ -25,6 +25,7 @@
                         <tr>
                             <td width="200px" style="font-weight: bold">
                                 <a href="{{route('downloadKuesioner',encrypt($kue->id_kuesioner))}}" class="btn btn-sm btn-primary">Download</a>
+                                {{-- <a href="{{ route('export-jawaban-kuesioner', $id_ujian) }}" class="btn btn-sm btn-success">Export Excel Peserta</a> --}}
                             </td>
                         </tr>
                     </table>

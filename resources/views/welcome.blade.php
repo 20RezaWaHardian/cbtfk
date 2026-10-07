@@ -9,10 +9,10 @@
     <title>CBT FK | Computer Based Test</title>
     <meta name="description" content="Platform Computer Based Test Fakultas Kedokteran untuk ujian digital, pengelolaan soal, monitoring peserta, dan analisis hasil evaluasi akademik.">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('landing/assets/img/favicons/apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('landing/assets/img/favicons/favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('landing/assets/img/favicons/favicon-16x16.png') }}">
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('landing/assets/img/favicons/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/images/logos/logo_uin.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/logos/logo_uin.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/logos/logo_uin.png') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/logos/logo_uin.png') }}">
     <meta name="theme-color" content="#0ea5e9">
 
     <link href="{{ asset('landing/assets/css/theme.css') }}" rel="stylesheet" />

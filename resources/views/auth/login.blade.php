@@ -7,7 +7,7 @@
     <title>Login | CBT FK</title>
     <meta name="description" content="Halaman login CBT FK untuk akses peserta, pengawas, dosen, dan pengelola ujian.">
 
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.png') }}" />
+    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/logo_uin.png') }}" />
     <link rel="stylesheet" href="{{ asset('assets/css/styles.min.css') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

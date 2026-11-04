@@ -84,7 +84,7 @@ Route::controller(HomeInertiaController::class)->group(function () {
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login-eksternal','halamanLoginEksternal')->name('loginEksternal');
-    Route::post('/login-post', 'loginPost')->middleware('throttle:5,1')->name('loginPost');
+    Route::post('/login-post', 'loginPost')->middleware('throttle:50,1')->name('loginPost');
     Route::post('/logout-manual', [AuthController::class, 'logoutManual'])
             ->name('logout.manual');
 });
